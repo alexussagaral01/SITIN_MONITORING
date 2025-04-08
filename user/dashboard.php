@@ -217,11 +217,6 @@ while ($row = $result->fetch_assoc()) {
                                     <div class="text-gray-700 bg-gray-50/80 p-4 rounded-lg">
                                         <?php echo htmlspecialchars($announcement['CONTENT']); ?>
                                     </div>
-                                    <div class="mt-3 flex justify-end">
-                                        <span class="text-xs text-gray-500 italic">
-                                            <?php echo date('h:i A', strtotime($announcement['CREATED_DATE'])); ?>
-                                        </span>
-                                    </div>
                                 </div>
                             <?php endforeach; ?>
                         </div>

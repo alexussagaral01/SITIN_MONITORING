@@ -415,12 +415,12 @@ $result = $stmt->get_result();
         }
 
         function changeEntries(entries) {
-            window.location.href = `admin_report.php?entries=${entries}&page=1`;
+            window.location.href = `admin_reports.php?entries=${entries}&page=1`;
         }
 
         function changePage(page) {
             const entries = document.getElementById('entriesPerPage').value;
-            window.location.href = `admin_report.php?entries=${entries}&page=${page}`;
+            window.location.href = `admin_reports.php?entries=${entries}&page=${page}`;
         }
 
         function searchTable() {

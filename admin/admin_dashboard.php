@@ -393,11 +393,6 @@ $yearLevelLabelsJSON = json_encode(array_keys($yearLevelCounts)); // Fixed from 
                                             </button>
                                         </div>
                                     </div>
-                                    <div class="mt-3 flex justify-end">
-                                        <span class="text-xs text-gray-500 italic">
-                                            <?php echo date('h:i A', strtotime($announcement['CREATED_DATE'])); ?>
-                                        </span>
-                                    </div>
                                 </div>
                             <?php endforeach; ?>
                         <?php endif; ?>
