@@ -452,86 +452,90 @@ $labDataJSON = json_encode($labData);
             // Programming Languages Chart
             const programmingChart = echarts.init(document.getElementById('programmingChart'));
             const programmingOption = {
-                legend: {
-                    top: 'bottom',
-                    textStyle: {
-                        fontSize: 12
-                    }
+                tooltip: {
+                    trigger: 'item'
                 },
-                toolbox: {
-                    show: true,
-                    feature: {
-                        mark: { show: true },
-                        dataView: { show: true, readOnly: false },
-                        restore: { show: true },
-                        saveAsImage: { show: true }
-                    }
+                legend: {
+                    top: '5%',
+                    left: 'center'
                 },
                 series: [
                     {
                         name: 'Programming Languages',
                         type: 'pie',
-                        radius: [30, 140],
-                        center: ['50%', '50%'],
-                        roseType: 'area',
+                        radius: ['40%', '70%'],
+                        center: ['50%', '55%'],
+                        avoidLabelOverlap: false,
+                        padAngle: 5,
                         itemStyle: {
-                            borderRadius: 8
+                            borderRadius: 10,
+                            color: function(params) {
+                                const colors = ['#36A2EB', '#FF6384', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
+                                return colors[params.dataIndex % colors.length];
+                            }
                         },
                         label: {
-                            show: false
+                            show: false,
+                            position: 'center'
                         },
                         emphasis: {
                             label: {
-                                show: false
+                                show: true,
+                                fontSize: 30,
+                                fontWeight: 'bold'
                             }
+                        },
+                        labelLine: {
+                            show: false
                         },
                         data: <?php echo $programDataJSON; ?>
                     }
-                ],
-                color: ['#36A2EB', '#FF6384', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40']
+                ]
             };
             programmingChart.setOption(programmingOption);
             
             // Laboratory Distribution Chart
             const labChart = echarts.init(document.getElementById('labChart'));
             const labOption = {
-                legend: {
-                    top: 'bottom',
-                    textStyle: {
-                        fontSize: 12
-                    }
+                tooltip: {
+                    trigger: 'item'
                 },
-                toolbox: {
-                    show: true,
-                    feature: {
-                        mark: { show: true },
-                        dataView: { show: true, readOnly: false },
-                        restore: { show: true },
-                        saveAsImage: { show: true }
-                    }
+                legend: {
+                    top: '5%',
+                    left: 'center'
                 },
                 series: [
                     {
                         name: 'Laboratory Distribution',
                         type: 'pie',
-                        radius: [30, 140],
-                        center: ['50%', '50%'],
-                        roseType: 'area',
+                        radius: ['40%', '70%'],
+                        center: ['50%', '55%'],
+                        avoidLabelOverlap: false,
+                        padAngle: 5,
                         itemStyle: {
-                            borderRadius: 8
+                            borderRadius: 10,
+                            color: function(params) {
+                                const colors = ['#FF6384', '#FFCE56', '#FF9F40', '#36A2EB', '#9966FF', '#4BC0C0'];
+                                return colors[params.dataIndex % colors.length];
+                            }
                         },
                         label: {
-                            show: false
+                            show: false,
+                            position: 'center'
                         },
                         emphasis: {
                             label: {
-                            show: false
+                                show: true,
+                                fontSize: 30,
+                                fontWeight: 'bold'
                             }
+                        },
+                        labelLine: {
+                            show: false
                         },
                         data: <?php echo $labDataJSON; ?>
                     }
-                ],
-                color: ['#FF6384', '#FFCE56', '#FF9F40', '#36A2EB', '#9966FF', '#4BC0C0']
+                ]
             };
             labChart.setOption(labOption);
 

@@ -97,6 +97,25 @@ while ($row = $result->fetch_assoc()) {
 // Convert to JavaScript array - Fix array methods syntax
 $yearLevelJSON = json_encode(array_values($yearLevelCounts)); // Fixed from array.values to array_values
 $yearLevelLabelsJSON = json_encode(array_keys($yearLevelCounts)); // Fixed from array.keys to array_keys
+
+// Get leaderboard data for top 5 most active students
+$leaderboardQuery = "
+    SELECT 
+        u.FIRST_NAME,
+        u.LAST_NAME,
+        u.YEAR_LEVEL,
+        u.UPLOAD_IMAGE,
+        COUNT(c.SITIN_ID) as total_sessions
+    FROM users u
+    LEFT JOIN curr_sitin c ON u.IDNO = c.IDNO
+    GROUP BY u.IDNO, u.FIRST_NAME, u.LAST_NAME, u.YEAR_LEVEL, u.UPLOAD_IMAGE
+    ORDER BY total_sessions DESC
+    LIMIT 5
+";
+$result = $conn->query($leaderboardQuery);
+while ($row = $result->fetch_assoc()) {
+    $leaderboardData[] = $row;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -274,6 +293,92 @@ $yearLevelLabelsJSON = json_encode(array_keys($yearLevelCounts)); // Fixed from 
 
     <!-- Dashboard Content -->
     <div class="px-8 py-8 w-full flex flex-wrap gap-8">
+        <!-- Leaderboard Card -->
+        <div class="w-full mb-8">
+            <div class="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-2xl overflow-hidden backdrop-blur-sm border border-white/30">
+                <div class="text-white p-4 flex items-center justify-center relative overflow-hidden" 
+                     style="background: linear-gradient(to bottom right, rgb(49, 46, 129), rgb(107, 33, 168), rgb(190, 24, 93))">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+                    <div class="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+                    <i class="fas fa-trophy text-2xl mr-4 relative z-10"></i>
+                    <h2 class="text-xl font-bold tracking-wider uppercase relative z-10">Student Leaderboard</h2>
+                </div>
+                
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <?php foreach ($leaderboardData as $index => $student): ?>
+                            <div class="bg-gradient-to-br <?php 
+                                switch($index) {
+                                    case 0: echo 'from-yellow-50 to-white border-yellow-200 hover:shadow-yellow-100'; break;
+                                    case 1: echo 'from-gray-50 to-white border-gray-200 hover:shadow-gray-100'; break;
+                                    case 2: echo 'from-orange-50 to-white border-orange-200 hover:shadow-orange-100'; break;
+                                    default: echo 'from-purple-50 to-white border-purple-200 hover:shadow-purple-100';
+                                }
+                            ?> rounded-xl p-4 shadow-lg border transform hover:scale-105 transition-all duration-300">
+                                <div class="flex flex-col items-center text-center space-y-2">
+                                    <!-- Rank Icon -->
+                                    <div class="text-2xl mb-1">
+                                        <?php
+                                        switch($index) {
+                                            case 0: echo '🥇'; break;
+                                            case 1: echo '🥈'; break;
+                                            case 2: echo '🥉'; break;
+                                            case 3: echo '🏅'; break; // 4th place medal
+                                            case 4: echo '🎖️'; break; // 5th place medal
+                                            default: echo ($index + 1);
+                                        }
+                                        ?>
+                                    </div>
+                                    
+                                    <!-- Replace the Student Avatar div with this updated version -->
+                                    <div class="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center">
+                                        <?php if (!empty($student['UPLOAD_IMAGE'])): ?>
+                                            <img src="../images/<?php echo $student['UPLOAD_IMAGE']; ?>" 
+                                                 alt="<?php echo htmlspecialchars($student['FIRST_NAME']); ?>" 
+                                                 class="w-full h-full object-cover"
+                                                 onerror="this.onerror=null; this.src='../images/default.jpg';">
+                                        <?php else: ?>
+                                            <img src="../images/default.jpg" 
+                                                 alt="Default Profile" 
+                                                 class="w-full h-full object-cover">
+                                        <?php endif; ?>
+                                    </div>
+                                    
+                                    <!-- Student Name -->
+                                    <div class="font-semibold text-gray-800">
+                                        <?php echo htmlspecialchars($student['FIRST_NAME'] . ' ' . $student['LAST_NAME']); ?>
+                                    </div>
+                                    
+                                    <!-- Year Level -->
+                                    <div class="text-sm text-gray-600">
+                                        <?php echo htmlspecialchars($student['YEAR_LEVEL']); ?>
+                                    </div>
+                                    
+                                    <!-- Stats -->
+                                    <div class="text-sm space-y-1">
+                                        <div class="font-semibold text-purple-600">
+                                            <?php echo $student['total_sessions'] ?? 0; ?> sessions
+                                        </div>
+                                        <div class="text-amber-500 font-medium text-xs">
+                                            <?php 
+                                            if ($student['total_sessions'] > 20) {
+                                                echo '⭐ Most Active';
+                                            } elseif ($student['total_sessions'] > 10) {
+                                                echo '✨ Active';
+                                            } else {
+                                                echo '📚 Regular';
+                                            }
+                                            ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Statistics Card -->
         <div class="flex-1 min-w-[400px] bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-2xl overflow-hidden h-[700px] backdrop-blur-sm border border-white/30">
             <div class="text-white p-4 flex items-center justify-center relative overflow-hidden" style="background: linear-gradient(to bottom right, rgb(49, 46, 129), rgb(107, 33, 168), rgb(190, 24, 93))">
@@ -415,7 +520,7 @@ $yearLevelLabelsJSON = json_encode(array_keys($yearLevelCounts)); // Fixed from 
             <div class="p-8">
                 <!-- Chart Container -->
                 <div class="h-[400px] bg-white/80 rounded-2xl p-4 shadow-inner">
-                    <canvas id="yearLevelChart"></canvas>
+                    <div id="yearLevelChart" style="width: 100%; height: 350px; margin: 0 auto;"></div>
                 </div>
             </div>
         </div>
@@ -500,53 +605,52 @@ $yearLevelLabelsJSON = json_encode(array_keys($yearLevelCounts)); // Fixed from 
             
             const pieOption = {
                 tooltip: {
-                    trigger: 'item',
-                    formatter: '{a} <br/>{b}: {c} ({d}%)'
-                    
+                    trigger: 'item'
                 },
                 legend: {
-                    bottom: '0',
-                    left: 'center',
-                    data: ['C Programming', 'C++ Programming', 'C# Programming', 'Java Programming', 'Python Programming', 'Other']
+                    top: '5%',
+                    left: 'center'
                 },
-                toolbox: {
-                    show: true,
-                    feature: {
-                        mark: { show: true },
-                        dataView: { show: true, readOnly: false },
-                        restore: { show: true },
-                        saveAsImage: { show: true }
-                    }
+                grid: {
+                    top: '20%'  // Add top margin
                 },
                 title: {
-                    text: 'Sit-In Distribution by Program',
+                    text: 'Programming Languages Distribution',
                     left: 'center',
-                    top: '0',
+                    top: '0%',
                     textStyle: {
                         fontSize: 16,
                         fontWeight: 'bold'
-                    }
+                    },
+                    padding: [0, 0, 20, 0]  // Add padding below title
                 },
                 series: [
                     {
                         name: 'Programming Language',
                         type: 'pie',
-                        radius: [30, 120],
-                        center: ['50%', '50%'],
-                        roseType: 'area',
+                        radius: ['40%', '70%'],
+                        center: ['50%', '55%'],  // Move chart down slightly
+                        avoidLabelOverlap: false,
+                        padAngle: 5,
                         itemStyle: {
-                            borderRadius: 8,
+                            borderRadius: 10,
                             color: function(params) {
                                 return colors[params.dataIndex % colors.length];
                             }
                         },
                         label: {
-                            show: false
+                            show: false,
+                            position: 'center'
                         },
                         emphasis: {
                             label: {
-                                show: false
+                                show: true,
+                                fontSize: 30,  // Slightly reduced from 40
+                                fontWeight: 'bold'
                             }
+                        },
+                        labelLine: {
+                            show: false
                         },
                         data: <?php echo $echartsPieDataJSON; ?>
                     }
@@ -560,67 +664,48 @@ $yearLevelLabelsJSON = json_encode(array_keys($yearLevelCounts)); // Fixed from 
                 sitInChart.resize();
             });
             
-            // Year Level Bar Chart
-            const yearLevelCtx = document.getElementById('yearLevelChart').getContext('2d');
-            
-            const yearLevelData = {
-                labels: <?php echo $yearLevelLabelsJSON; ?>,
-                datasets: [{
-                    label: 'College of Computer Studies Students Year Level',
-                    data: <?php echo $yearLevelJSON; ?>,
-                    backgroundColor: [
-                        'rgba(54, 162, 235, 0.5)',  // Blue for 1st Year
-                        'rgba(255, 99, 132, 0.5)',  // Red for 2nd Year
-                        'rgba(75, 192, 192, 0.5)',  // Green for 3rd Year
-                        'rgba(153, 102, 255, 0.5)'  // Purple for 4th Year
-                    ],
-                    borderColor: [
-                        'rgba(54, 162, 235, 1)',
-                        'rgba(255, 99, 132, 1)',
-                        'rgba(75, 192, 192, 1)',
-                        'rgba(153, 102, 255, 1)'
-                    ],
-                    borderWidth: 1,
-                    maxBarThickness: 200 // Adjusted bar thickness
-                }]
-            };
-            
-            new Chart(yearLevelCtx, {
-                type: 'bar',
-                data: yearLevelData,
-                options: {
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                drawBorder: false,
-                                color: 'rgba(0, 0, 0, 0.1)'
-                            },
-                            ticks: {
-                                stepSize: 20
-                            },
-                            title: {
-                                display: true,
-                                text: 'Number of Students' // Add y-axis label
-                            }
+            // Replace the Chart.js initialization with ECharts
+            const yearLevelChart = echarts.init(document.getElementById('yearLevelChart'));
+            const yearLevelOption = {
+                xAxis: {
+                    type: 'category',
+                    data: <?php echo $yearLevelLabelsJSON; ?>,
+                    axisLabel: {
+                        fontSize: 12,
+                        fontWeight: 'bold'
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: 'Number of Students',
+                    nameLocation: 'middle',
+                    nameGap: 40
+                },
+                series: [
+                    {
+                        data: <?php echo $yearLevelJSON; ?>,
+                        type: 'bar',
+                        showBackground: true,
+                        backgroundStyle: {
+                            color: 'rgba(180, 180, 180, 0.2)'
                         },
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top'
-                        },
-                        title: {
-                            display: false
+                        itemStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: '#83bff6' },
+                                { offset: 0.5, color: '#188df0' },
+                                { offset: 1, color: '#188df0' }
+                            ])
                         }
                     }
-                }
+                ]
+            };
+
+            yearLevelChart.setOption(yearLevelOption);
+
+            // Update resize handler to include yearLevelChart
+            window.addEventListener('resize', function() {
+                sitInChart.resize();
+                yearLevelChart.resize();
             });
         });
 
