@@ -34,11 +34,19 @@ $programCounts = [
     'C++ Programming' => 0,
     'C# Programming' => 0,
     'Java Programming' => 0,
+    'Php Programming' => 0,
     'Python Programming' => 0,
-    'Other' => 0
+    'Database' => 0,
+    'Digital Logic & Design' => 0,
+    'Embedded System & IOT' => 0,
+    'System Integration & Architecture' => 0,
+    'Computer Application' => 0,
+    'Web Design & Development' => 0,
+    'Project Management' => 0
 ];
 
 $labCounts = [
+    'Lab 517' => 0,
     'Lab 524' => 0,
     'Lab 526' => 0,
     'Lab 528' => 0,
@@ -53,8 +61,6 @@ while ($row = $result1->fetch_assoc()) {
     $purpose = $row['PURPOSE'];
     if (array_key_exists($purpose, $programCounts)) {
         $programCounts[$purpose] = $row['count'];
-    } else {
-        $programCounts['Other'] += $row['count'];
     }
 }
 
@@ -260,7 +266,7 @@ $labDataJSON = json_encode($labData);
                 <div class="text-lg font-bold text-[#003d64] text-center mb-4">
                     Programming Languages Distribution
                 </div>
-                <div id="programmingChart" class="h-[350px]"></div>
+                <div id="programmingChart" class="h-[450px]"></div>  <!-- Increased height to accommodate legend -->
             </div>
             
             <!-- Chart Card 2 -->
@@ -268,7 +274,7 @@ $labDataJSON = json_encode($labData);
                 <div class="text-lg font-bold text-[#003d64] text-center mb-4">
                     Room Distribution
                 </div>
-                <div id="labChart" class="h-[350px]"></div>
+                <div id="labChart" class="h-[450px]"></div>  <!-- Increased height to match -->
             </div>
         </div>
 
@@ -453,44 +459,81 @@ $labDataJSON = json_encode($labData);
             const programmingChart = echarts.init(document.getElementById('programmingChart'));
             const programmingOption = {
                 tooltip: {
-                    trigger: 'item'
+                    trigger: 'item',
+                    formatter: '{b}: {c} ({d}%)'
                 },
                 legend: {
-                    top: '5%',
-                    left: 'center'
-                },
-                series: [
-                    {
-                        name: 'Programming Languages',
-                        type: 'pie',
-                        radius: ['40%', '70%'],
-                        center: ['50%', '55%'],
-                        avoidLabelOverlap: false,
-                        padAngle: 5,
-                        itemStyle: {
-                            borderRadius: 10,
-                            color: function(params) {
-                                const colors = ['#36A2EB', '#FF6384', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
-                                return colors[params.dataIndex % colors.length];
-                            }
-                        },
-                        label: {
-                            show: false,
-                            position: 'center'
-                        },
-                        emphasis: {
-                            label: {
-                                show: true,
-                                fontSize: 30,
-                                fontWeight: 'bold'
-                            }
-                        },
-                        labelLine: {
-                            show: false
-                        },
-                        data: <?php echo $programDataJSON; ?>
+                    type: 'plain',
+                    orient: 'horizontal',
+                    bottom: 10,
+                    left: 'center',
+                    width: '95%',
+                    itemGap: 10,
+                    itemWidth: 12,
+                    itemHeight: 12,
+                    textStyle: {
+                        fontSize: 11,
+                        color: '#666',
+                        padding: [0, 4, 0, 4]
+                    },
+                    formatter: name => {
+                        if (name.includes('&')) {
+                            return name.replace(' & ', '\n');
+                        }
+                        return name;
+                    },
+                    tooltip: {
+                        show: true
+                    },
+                    pageTextStyle: {
+                        color: '#666'
+                    },
+                    selectedMode: false,
+                    grid: {
+                        left: 10,
+                        right: 10,
+                        top: 5,
+                        bottom: 10
                     }
-                ]
+                },
+                series: [{
+                    name: 'Programming Languages',
+                    type: 'pie',
+                    radius: ['30%', '60%'],
+                    center: ['50%', '40%'],  // Moved up to accommodate legend
+                    avoidLabelOverlap: true,
+                    itemStyle: {
+                        borderRadius: 6,
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    },
+                    label: {
+                        show: false
+                    },
+                    emphasis: {
+                        label: {
+                            show: true,
+                            fontSize: '14',
+                            fontWeight: 'bold',
+                            formatter: '{b}\n{d}%'
+                        },
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    },
+                    labelLine: {
+                        show: false
+                    },
+                    data: <?php echo $programDataJSON; ?>
+                }],
+                color: [
+                    '#36A2EB', '#FF6384', '#FFCE56', '#4BC0C0', '#9966FF', 
+                    '#FF9F40', '#4CAF50', '#E91E63', '#2196F3', '#FF5722', 
+                    '#673AB7', '#009688', '#795548'
+                ],
+                backgroundColor: 'transparent'
             };
             programmingChart.setOption(programmingOption);
             
@@ -498,44 +541,74 @@ $labDataJSON = json_encode($labData);
             const labChart = echarts.init(document.getElementById('labChart'));
             const labOption = {
                 tooltip: {
-                    trigger: 'item'
+                    trigger: 'item',
+                    formatter: '{b}: {c} ({d}%)'
                 },
                 legend: {
-                    top: '5%',
-                    left: 'center'
-                },
-                series: [
-                    {
-                        name: 'Laboratory Distribution',
-                        type: 'pie',
-                        radius: ['40%', '70%'],
-                        center: ['50%', '55%'],
-                        avoidLabelOverlap: false,
-                        padAngle: 5,
-                        itemStyle: {
-                            borderRadius: 10,
-                            color: function(params) {
-                                const colors = ['#FF6384', '#FFCE56', '#FF9F40', '#36A2EB', '#9966FF', '#4BC0C0'];
-                                return colors[params.dataIndex % colors.length];
-                            }
-                        },
-                        label: {
-                            show: false,
-                            position: 'center'
-                        },
-                        emphasis: {
-                            label: {
-                                show: true,
-                                fontSize: 30,
-                                fontWeight: 'bold'
-                            }
-                        },
-                        labelLine: {
-                            show: false
-                        },
-                        data: <?php echo $labDataJSON; ?>
+                    type: 'plain',
+                    orient: 'horizontal',
+                    bottom: 10,
+                    left: 'center',
+                    width: '95%',
+                    itemGap: 10,
+                    itemWidth: 12,
+                    itemHeight: 12,
+                    textStyle: {
+                        fontSize: 11,
+                        color: '#666',
+                        padding: [0, 4, 0, 4]
+                    },
+                    tooltip: {
+                        show: true
+                    },
+                    pageTextStyle: {
+                        color: '#666'
+                    },
+                    selectedMode: false,
+                    grid: {
+                        left: 10,
+                        right: 10,
+                        top: 5,
+                        bottom: 10
                     }
-                ]
+                },
+                series: [{
+                    name: 'Laboratory Distribution',
+                    type: 'pie',
+                    radius: ['30%', '60%'],
+                    center: ['50%', '40%'],  // Moved up to accommodate legend
+                    avoidLabelOverlap: true,
+                    itemStyle: {
+                        borderRadius: 6,
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    },
+                    label: {
+                        show: false
+                    },
+                    emphasis: {
+                        label: {
+                            show: true,
+                            fontSize: '14',
+                            fontWeight: 'bold',
+                            formatter: '{b}\n{d}%'
+                        },
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    },
+                    labelLine: {
+                        show: false
+                    },
+                    data: <?php echo $labDataJSON; ?>
+                }],
+                color: [
+                    '#FF6384', '#FFCE56', '#FF9F40', '#36A2EB', '#9966FF', 
+                    '#4BC0C0', '#4CAF50'
+                ],
+                backgroundColor: 'transparent'
             };
             labChart.setOption(labOption);
 

@@ -328,8 +328,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['search']) && !empty($
                                                         <option value="C++ Programming">C++ Programming</option>
                                                         <option value="C# Programming">C# Programming</option>
                                                         <option value="Java Programming">Java Programming</option>
+                                                        <option value="Php Programming">Php Programming</option>
                                                         <option value="Python Programming">Python Programming</option>
-                                                        <option value="Other">Other</option>
+                                                        <option value="Database">Database</option>
+                                                        <option value="Digital Logic & Design">Digital Logic & Design</option>
+                                                        <option value="Embedded System & IOT">Embedded System & IOT</option>
+                                                        <option value="System Integration & Architecture">System Integration & Architecture</option>
+                                                        <option value="Computer Application">Computer Application</option>
+                                                        <option value="Web Design & Development">Web Design & Development</option>
+                                                        <option value="Project Management">Project Management</option>
                                                     </select>
                                                     <div class="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-500">
                                                         <i class="fas fa-chevron-down"></i>
@@ -338,6 +345,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['search']) && !empty($
                                                 <div class="relative">
                                                     <select name="laboratory" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl appearance-none cursor-pointer hover:border-purple-500 transition-colors" required>
                                                         <option value=""disabled selected>Select Laboratory</option>
+                                                        <option value="Lab 517">Lab 517</option>
                                                         <option value="Lab 524">Lab 524</option>
                                                         <option value="Lab 526">Lab 526</option>
                                                         <option value="Lab 528">Lab 528</option>

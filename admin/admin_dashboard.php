@@ -58,8 +58,15 @@ $programCounts = [
     'C++ Programming' => 0,
     'C# Programming' => 0,
     'Java Programming' => 0,
+    'Php Programming' => 0,
     'Python Programming' => 0,
-    'Other' => 0
+    'Database' => 0,
+    'Digital Logic & Design' => 0,
+    'Embedded System & IOT' => 0,
+    'System Integration & Architecture' => 0,
+    'Computer Application' => 0,
+    'Web Design & Development' => 0,
+    'Project Management' => 0
 ];
 
 $result = $conn->query("SELECT PURPOSE, COUNT(*) as count FROM curr_sitin GROUP BY PURPOSE");
@@ -67,8 +74,6 @@ while ($row = $result->fetch_assoc()) {
     $purpose = $row['PURPOSE'];
     if (array_key_exists($purpose, $programCounts)) {
         $programCounts[$purpose] = $row['count'];
-    } else {
-        $programCounts['Other'] += $row['count'];
     }
 }
 
@@ -380,7 +385,7 @@ while ($row = $result->fetch_assoc()) {
         </div>
 
         <!-- Statistics Card -->
-        <div class="flex-1 min-w-[400px] bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-2xl overflow-hidden h-[700px] backdrop-blur-sm border border-white/30">
+        <div class="flex-1 min-w-[600px] bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-2xl overflow-hidden h-[900px] backdrop-blur-sm border border-white/30">
             <div class="text-white p-4 flex items-center justify-center relative overflow-hidden" style="background: linear-gradient(to bottom right, rgb(49, 46, 129), rgb(107, 33, 168), rgb(190, 24, 93))">
                 <div class="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
                 <div class="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
@@ -426,13 +431,13 @@ while ($row = $result->fetch_assoc()) {
 
                 <!-- Chart Container -->
                 <div class="flex-1 relative bg-white/80 rounded-2xl p-4 shadow-inner">
-                    <div id="sitInChart" style="width: 100%; height: 350px; margin: 0 auto;"></div>
+                    <div id="sitInChart" style="width: 100%; height: 600px; margin: 0 auto;"></div>
                 </div>
             </div>
         </div>
 
         <!-- Announcements Card -->
-        <div class="flex-1 min-w-[400px] bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-2xl overflow-hidden h-[700px] backdrop-blur-sm border border-white/30">
+        <div class="flex-1 min-w-[600px] bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-2xl overflow-hidden h-[900px] backdrop-blur-sm border border-white/30">
             <div class="text-white p-4 flex items-center justify-center relative overflow-hidden" style="background: linear-gradient(to bottom right, rgb(49, 46, 129), rgb(107, 33, 168), rgb(190, 24, 93))">
                 <div class="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
                 <div class="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
@@ -594,69 +599,114 @@ while ($row = $result->fetch_assoc()) {
             const sitInChart = echarts.init(document.getElementById('sitInChart'));
             
             // Define colors for each program
+            // Define a more diverse color palette
             const colors = [
                 '#36A2EB', // Blue
                 '#FF6384', // Pink
                 '#FFCE56', // Yellow
                 '#4BC0C0', // Teal
                 '#9966FF', // Purple
-                '#FF9F40'  // Orange
+                '#FF9F40', // Orange
+                '#4CAF50', // Green
+                '#E91E63', // Red
+                '#2196F3', // Light Blue
+                '#FF5722', // Deep Orange
+                '#673AB7', // Deep Purple
+                '#009688'  // Cyan
             ];
-            
+
+            // Make sure all purposes are included in the legend, even with zero values
             const pieOption = {
                 tooltip: {
-                    trigger: 'item'
+                    trigger: 'item',
+                    formatter: '{b}: {c} ({d}%)'
                 },
                 legend: {
-                    top: '5%',
-                    left: 'center'
+                    type: 'plain',
+                    orient: 'horizontal',
+                    bottom: 10,
+                    left: 'center',
+                    width: '95%',
+                    itemGap: 10,
+                    itemWidth: 12,
+                    itemHeight: 12,
+                    textStyle: {
+                        fontSize: 11,
+                        color: '#666',
+                        padding: [0, 4, 0, 4]
+                    },
+                    formatter: name => {
+                        // Split long names into two lines
+                        if (name.includes('&')) {
+                            return name.replace(' & ', '\n');
+                        }
+                        return name;
+                    },
+                    tooltip: {
+                        show: true
+                    },
+                    data: [
+                        'C Programming', 'C++ Programming', 'C# Programming',
+                        'Java Programming', 'Php Programming', 'Python Programming',
+                        'Database', 'Digital Logic & Design', 'Embedded System & IOT',
+                        'System Integration & Architecture', 'Computer Application',
+                        'Web Design & Development', 'Project Management'
+                    ],
+                    pageTextStyle: {
+                        color: '#666'
+                    },
+                    selectedMode: false,
+                    grid: {
+                        left: 10,
+                        right: 10,
+                        top: 5,
+                        bottom: 10
+                    }
                 },
                 grid: {
-                    top: '20%'  // Add top margin
+                    containLabel: true
                 },
                 title: {
                     text: 'Programming Languages Distribution',
                     left: 'center',
-                    top: '0%',
+                    top: 20,
                     textStyle: {
                         fontSize: 16,
                         fontWeight: 'bold'
-                    },
-                    padding: [0, 0, 20, 0]  // Add padding below title
-                },
-                series: [
-                    {
-                        name: 'Programming Language',
-                        type: 'pie',
-                        radius: ['40%', '70%'],
-                        center: ['50%', '55%'],  // Move chart down slightly
-                        avoidLabelOverlap: false,
-                        padAngle: 5,
-                        itemStyle: {
-                            borderRadius: 10,
-                            color: function(params) {
-                                return colors[params.dataIndex % colors.length];
-                            }
-                        },
-                        label: {
-                            show: false,
-                            position: 'center'
-                        },
-                        emphasis: {
-                            label: {
-                                show: true,
-                                fontSize: 30,  // Slightly reduced from 40
-                                fontWeight: 'bold'
-                            }
-                        },
-                        labelLine: {
-                            show: false
-                        },
-                        data: <?php echo $echartsPieDataJSON; ?>
                     }
-                ]
+                },
+                series: [{
+                    type: 'pie',
+                    radius: ['30%', '60%'],
+                    center: ['50%', '40%'],  // Moved up more to accommodate legend
+                    avoidLabelOverlap: true,
+                    itemStyle: {
+                        borderRadius: 6,
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    },
+                    label: {
+                        show: false
+                    },
+                    emphasis: {
+                        label: {
+                            show: true,
+                            fontSize: '14',
+                            fontWeight: 'bold',
+                            formatter: '{b}\n{d}%'
+                        },
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    },
+                    data: <?php echo $echartsPieDataJSON; ?>
+                }],
+                color: colors,
+                backgroundColor: 'transparent'
             };
-            
+
             sitInChart.setOption(pieOption);
             
             // Make the chart responsive

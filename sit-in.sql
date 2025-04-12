@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 30, 2025 at 02:52 PM
+-- Generation Time: Apr 11, 2025 at 04:41 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -65,17 +65,14 @@ CREATE TABLE `curr_sitin` (
   `SITIN_ID` int(11) NOT NULL,
   `IDNO` int(11) NOT NULL,
   `FULL_NAME` varchar(30) NOT NULL,
-  `PURPOSE` enum('C Programming','C++ Programming','C# Programming','Java Programming','Python Programming','Other') NOT NULL,
-  `LABORATORY` enum('Lab 524','Lab 526','Lab 528','Lab 530','Lab 542','Lab 544') NOT NULL,
+  `PURPOSE` enum('C Programming','C++ Programming','C# Programming','Java Programming','Php Programming','Python Programming','Database','Digital Logic & Design','Embedded System & IOT','System Integration & Architecture','Computer Application','Web Design & Development','Project Management') NOT NULL,
+  `LABORATORY` enum('Lab 517','Lab 524','Lab 526','Lab 528','Lab 530','Lab 542','Lab 544') NOT NULL,
   `TIME_IN` time NOT NULL,
   `TIME_OUT` time DEFAULT NULL,
   `DATE` date NOT NULL,
   `STATUS` varchar(10) NOT NULL DEFAULT 'Active'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `curr_sitin`
---
 -- --------------------------------------------------------
 
 --
@@ -90,6 +87,13 @@ CREATE TABLE `feedback` (
   `FEEDBACK` varchar(255) NOT NULL,
   `RATING` int(11) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `feedback`
+--
+
+INSERT INTO `feedback` (`FEEDBACK_ID`, `IDNO`, `LABORATORY`, `DATE`, `FEEDBACK`, `RATING`) VALUES
+(1, 12312312, 'Lab 544', '2025-03-30', 'nice', 5);
 
 -- --------------------------------------------------------
 
@@ -119,7 +123,9 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`STUD_NUM`, `IDNO`, `LAST_NAME`, `FIRST_NAME`, `MID_NAME`, `COURSE`, `YEAR_LEVEL`, `USER_NAME`, `PASSWORD_HASH`, `UPLOAD_IMAGE`, `EMAIL`, `ADDRESS`, `SESSION`) VALUES
 (2, 22680649, 'Sagaral', 'Alexus Sundae', 'Jamilo', 'BS IN INFORMATION TECHNOLOGY', '3rd Year', 'alexus123', '$2y$10$9Vx2MQN1h.BjEAgqVZll1u/FvjkI3dKO5dNR.X47IviQcCdduEz92', 0x363764663861393632366239325f363764643861353763303132365f6d656f772e6a7067, 'alexussagaral3@gmail.com', 'Cebu City', 30),
-(3, 12312312, 'Cabunilas', 'Vince Bryant', 'N', 'BS IN INFORMATION TECHNOLOGY', '3rd Year', 'Vince123', '$2y$10$UHWV1XqZt8gOPw36Ioski.Nh3gIF8WTXCp9IF94qu1iI9RUwCq.Ku', 0x696d6167652e6a7067, '', '', 30);
+(3, 12312312, 'Cabunilas', 'Vince Bryant', 'N', 'BS IN INFORMATION TECHNOLOGY', '3rd Year', 'Vince123', '$2y$10$UHWV1XqZt8gOPw36Ioski.Nh3gIF8WTXCp9IF94qu1iI9RUwCq.Ku', 0x696d6167652e6a7067, '', '', 30),
+(4, 57363743, 'Sagaral', 'Niel', 'Jamilo', 'BS IN INFORMATION TECHNOLOGY', '3rd Year', 'niel123', '$2y$10$K6.PJ82Q0CmQx2X2tj/Bq.ZA01XzrmcV25rSgbGHY3tD/PKRQledS', 0x363766363930386531326538335f646f776e6c6f6164202832292e6a7067, 'nielsagaral@gmail.com', 'Cebu City', 27),
+(5, 69958659, 'Catubig ', 'Mark Dave', 'C', 'BS IN INFORMATION TECHNOLOGY', '3rd Year', 'mark123', '$2y$10$VxO3xSb1z7pqujcOnm.Hhe0NSosQRFJqRgEepX1rgS9OgxhU09lxS', 0x696d6167652e6a7067, '', '', 30);
 
 --
 -- Indexes for dumped tables
@@ -175,19 +181,19 @@ ALTER TABLE `announcement`
 -- AUTO_INCREMENT for table `curr_sitin`
 --
 ALTER TABLE `curr_sitin`
-  MODIFY `SITIN_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `SITIN_ID` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `feedback`
 --
 ALTER TABLE `feedback`
-  MODIFY `FEEDBACK_ID` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `FEEDBACK_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `STUD_NUM` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `STUD_NUM` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
