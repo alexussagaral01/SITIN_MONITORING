@@ -255,16 +255,94 @@ $result = $stmt->get_result();
             <div class="p-6">
                 <!-- Date and Search Controls -->
                 <div class="flex items-center justify-between mb-6">
-                    <div class="flex space-x-3">
-                        <input type="date" class="border rounded px-3 py-2">
-                        <button class="bg-gradient-to-r from-[rgba(74,105,187,1)] to-[rgba(205,77,204,1)] text-white px-4 py-2 rounded hover:opacity-90 transition-opacity duration-200">
+                    <form method="POST" class="flex space-x-3" id="filterForm">
+                        <input type="date" name="selected_date" value="<?php echo isset($_POST['selected_date']) ? $_POST['selected_date'] : ''; ?>" class="border rounded px-3 py-2">
+
+                        <select name="selected_purpose" class="border rounded px-3 py-2">
+                            <option value="" <?php echo !isset($_POST['selected_purpose']) ? 'selected' : ''; ?>>Select Purpose</option>
+                            <option value="C Programming" <?php echo isset($_POST['selected_purpose']) && $_POST['selected_purpose'] == 'C Programming' ? 'selected' : ''; ?>>C Programming</option>
+                            <option value="C++ Programming" <?php echo isset($_POST['selected_purpose']) && $_POST['selected_purpose'] == 'C++ Programming' ? 'selected' : ''; ?>>C++ Programming</option>
+                            <option value="C# Programming" <?php echo isset($_POST['selected_purpose']) && $_POST['selected_purpose'] == 'C# Programming' ? 'selected' : ''; ?>>C# Programming</option>
+                            <option value="Java Programming" <?php echo isset($_POST['selected_purpose']) && $_POST['selected_purpose'] == 'Java Programming' ? 'selected' : ''; ?>>Java Programming</option>
+                            <option value="Php Programming" <?php echo isset($_POST['selected_purpose']) && $_POST['selected_purpose'] == 'Php Programming' ? 'selected' : ''; ?>>Php Programming</option>
+                            <option value="Python Programming" <?php echo isset($_POST['selected_purpose']) && $_POST['selected_purpose'] == 'Python Programming' ? 'selected' : ''; ?>>Python Programming</option>
+                            <option value="Database" <?php echo isset($_POST['selected_purpose']) && $_POST['selected_purpose'] == 'Database' ? 'selected' : ''; ?>>Database</option>
+                            <option value="Digital Logic & Design" <?php echo isset($_POST['selected_purpose']) && $_POST['selected_purpose'] == 'Digital Logic & Design' ? 'selected' : ''; ?>>Digital Logic & Design</option>
+                            <option value="Embedded System & IOT" <?php echo isset($_POST['selected_purpose']) && $_POST['selected_purpose'] == 'Embedded System & IOT' ? 'selected' : ''; ?>>Embedded System & IOT</option>
+                            <option value="System Integration & Architecture" <?php echo isset($_POST['selected_purpose']) && $_POST['selected_purpose'] == 'System Integration & Architecture' ? 'selected' : ''; ?>>System Integration & Architecture</option>
+                            <option value="Computer Application" <?php echo isset($_POST['selected_purpose']) && $_POST['selected_purpose'] == 'Computer Application' ? 'selected' : ''; ?>>Computer Application</option>
+                            <option value="Web Design & Development" <?php echo isset($_POST['selected_purpose']) && $_POST['selected_purpose'] == 'Web Design & Development' ? 'selected' : ''; ?>>Web Design & Development</option>
+                            <option value="Project Management" <?php echo isset($_POST['selected_purpose']) && $_POST['selected_purpose'] == 'Project Management' ? 'selected' : ''; ?>>Project Management</option>
+                        </select>
+
+                        <select name="selected_laboratory" class="border rounded px-3 py-2">
+                            <option value="" <?php echo !isset($_POST['selected_laboratory']) ? 'selected' : ''; ?>>Select Laboratory</option>
+                            <option value="Lab 517" <?php echo isset($_POST['selected_laboratory']) && $_POST['selected_laboratory'] == 'Lab 517' ? 'selected' : ''; ?>>Lab 517</option>
+                            <option value="Lab 524" <?php echo isset($_POST['selected_laboratory']) && $_POST['selected_laboratory'] == 'Lab 524' ? 'selected' : ''; ?>>Lab 524</option>
+                            <option value="Lab 526" <?php echo isset($_POST['selected_laboratory']) && $_POST['selected_laboratory'] == 'Lab 526' ? 'selected' : ''; ?>>Lab 526</option>
+                            <option value="Lab 528" <?php echo isset($_POST['selected_laboratory']) && $_POST['selected_laboratory'] == 'Lab 528' ? 'selected' : ''; ?>>Lab 528</option>
+                            <option value="Lab 530" <?php echo isset($_POST['selected_laboratory']) && $_POST['selected_laboratory'] == 'Lab 530' ? 'selected' : ''; ?>>Lab 530</option>
+                            <option value="Lab 542" <?php echo isset($_POST['selected_laboratory']) && $_POST['selected_laboratory'] == 'Lab 542' ? 'selected' : ''; ?>>Lab 542</option>
+                            <option value="Lab 544" <?php echo isset($_POST['selected_laboratory']) && $_POST['selected_laboratory'] == 'Lab 544' ? 'selected' : ''; ?>>Lab 544</option>
+                        </select>
+
+                        <button type="submit" class="bg-gradient-to-r from-[rgba(74,105,187,1)] to-[rgba(205,77,204,1)] text-white px-4 py-2 rounded hover:opacity-90 transition-opacity duration-200">
                             <i class="fas fa-search mr-2"></i>Search
                         </button>
-                        <button class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors duration-200">
+                        <button type="button" onclick="resetFilters()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors duration-200">
                             <i class="fas fa-undo mr-2"></i>Reset
                         </button>
-                    </div>
+                    </form>
                 </div>
+                <script>
+                    function resetFilters() {
+                        document.querySelector('input[name="selected_date"]').value = '';
+                        document.querySelector('select[name="selected_purpose"]').selectedIndex = 0;
+                        document.querySelector('select[name="selected_laboratory"]').selectedIndex = 0;
+                        document.getElementById('filterForm').submit();
+                    }
+                </script>
+                <?php
+                // Filter data based on selected criteria
+                $selected_date = isset($_POST['selected_date']) ? $_POST['selected_date'] : '';
+                $selected_purpose = isset($_POST['selected_purpose']) ? $_POST['selected_purpose'] : '';
+                $selected_laboratory = isset($_POST['selected_laboratory']) ? $_POST['selected_laboratory'] : '';
+                
+                // Build the query dynamically based on filters
+                $filter_query = "SELECT IDNO, FULL_NAME, PURPOSE, LABORATORY, TIME_IN, TIME_OUT, DATE FROM curr_sitin WHERE 1=1";
+                
+                $params = [];
+                $types = '';
+                
+                if (!empty($selected_date)) {
+                    $filter_query .= " AND DATE = ?";
+                    $params[] = $selected_date;
+                    $types .= 's';
+                }
+                
+                if (!empty($selected_purpose)) {
+                    $filter_query .= " AND PURPOSE = ?";
+                    $params[] = $selected_purpose;
+                    $types .= 's';
+                }
+                
+                if (!empty($selected_laboratory)) {
+                    $filter_query .= " AND LABORATORY = ?";
+                    $params[] = $selected_laboratory;
+                    $types .= 's';
+                }
+                
+                $filter_query .= " ORDER BY DATE DESC LIMIT ? OFFSET ?";
+                $params[] = $entries_per_page;
+                $params[] = $offset;
+                $types .= 'ii';
+                
+                // Use prepared statement for the filtered query
+                $stmt = $conn->prepare($filter_query);
+                $stmt->bind_param($types, ...$params);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                ?>
 
                 <!-- Export Options -->
                 <div class="flex justify-between items-center mb-4">
