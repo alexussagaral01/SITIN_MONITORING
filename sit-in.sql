@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 11, 2025 at 04:41 AM
+-- Generation Time: Apr 15, 2025 at 03:28 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -53,7 +53,9 @@ CREATE TABLE `announcement` (
 
 INSERT INTO `announcement` (`ID`, `TITLE`, `CONTENT`, `CREATED_DATE`, `CREATED_BY`) VALUES
 (1, '', 'GOOD DAY CCS', '2025-03-24', 'ADMIN'),
-(2, '', 'ATTENTION CCS', '2025-03-24', 'ADMIN');
+(2, '', 'ATTENTION CCS', '2025-03-24', 'ADMIN'),
+(3, '', 'goodday', '2025-04-11', 'ADMIN'),
+(4, '', 'ATTENTION CCS STUDENT ', '2025-04-11', 'ADMIN');
 
 -- --------------------------------------------------------
 
@@ -72,6 +74,10 @@ CREATE TABLE `curr_sitin` (
   `DATE` date NOT NULL,
   `STATUS` varchar(10) NOT NULL DEFAULT 'Active'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `curr_sitin`
+--
 
 -- --------------------------------------------------------
 
@@ -92,8 +98,6 @@ CREATE TABLE `feedback` (
 -- Dumping data for table `feedback`
 --
 
-INSERT INTO `feedback` (`FEEDBACK_ID`, `IDNO`, `LABORATORY`, `DATE`, `FEEDBACK`, `RATING`) VALUES
-(1, 12312312, 'Lab 544', '2025-03-30', 'nice', 5);
 
 -- --------------------------------------------------------
 
@@ -114,18 +118,9 @@ CREATE TABLE `users` (
   `UPLOAD_IMAGE` longblob DEFAULT NULL,
   `EMAIL` varchar(30) NOT NULL,
   `ADDRESS` varchar(255) NOT NULL,
-  `SESSION` int(11) NOT NULL DEFAULT 30
+  `SESSION` int(11) NOT NULL DEFAULT 30,
+  `POINTS` int(5) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `users`
---
-
-INSERT INTO `users` (`STUD_NUM`, `IDNO`, `LAST_NAME`, `FIRST_NAME`, `MID_NAME`, `COURSE`, `YEAR_LEVEL`, `USER_NAME`, `PASSWORD_HASH`, `UPLOAD_IMAGE`, `EMAIL`, `ADDRESS`, `SESSION`) VALUES
-(2, 22680649, 'Sagaral', 'Alexus Sundae', 'Jamilo', 'BS IN INFORMATION TECHNOLOGY', '3rd Year', 'alexus123', '$2y$10$9Vx2MQN1h.BjEAgqVZll1u/FvjkI3dKO5dNR.X47IviQcCdduEz92', 0x363764663861393632366239325f363764643861353763303132365f6d656f772e6a7067, 'alexussagaral3@gmail.com', 'Cebu City', 30),
-(3, 12312312, 'Cabunilas', 'Vince Bryant', 'N', 'BS IN INFORMATION TECHNOLOGY', '3rd Year', 'Vince123', '$2y$10$UHWV1XqZt8gOPw36Ioski.Nh3gIF8WTXCp9IF94qu1iI9RUwCq.Ku', 0x696d6167652e6a7067, '', '', 30),
-(4, 57363743, 'Sagaral', 'Niel', 'Jamilo', 'BS IN INFORMATION TECHNOLOGY', '3rd Year', 'niel123', '$2y$10$K6.PJ82Q0CmQx2X2tj/Bq.ZA01XzrmcV25rSgbGHY3tD/PKRQledS', 0x363766363930386531326538335f646f776e6c6f6164202832292e6a7067, 'nielsagaral@gmail.com', 'Cebu City', 27),
-(5, 69958659, 'Catubig ', 'Mark Dave', 'C', 'BS IN INFORMATION TECHNOLOGY', '3rd Year', 'mark123', '$2y$10$VxO3xSb1z7pqujcOnm.Hhe0NSosQRFJqRgEepX1rgS9OgxhU09lxS', 0x696d6167652e6a7067, '', '', 30);
 
 --
 -- Indexes for dumped tables
@@ -175,13 +170,13 @@ ALTER TABLE `admin`
 -- AUTO_INCREMENT for table `announcement`
 --
 ALTER TABLE `announcement`
-  MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `curr_sitin`
 --
 ALTER TABLE `curr_sitin`
-  MODIFY `SITIN_ID` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `SITIN_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `feedback`
@@ -193,7 +188,7 @@ ALTER TABLE `feedback`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `STUD_NUM` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `STUD_NUM` int(11) NOT NULL AUTO_INCREMENT;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

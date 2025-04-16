@@ -103,6 +103,9 @@ while ($row = $result->fetch_assoc()) {
 $yearLevelJSON = json_encode(array_values($yearLevelCounts)); // Fixed from array.values to array_values
 $yearLevelLabelsJSON = json_encode(array_keys($yearLevelCounts)); // Fixed from array.keys to array_keys
 
+// Initialize leaderboard array
+$leaderboardData = [];
+
 // Get leaderboard data for top 5 most active students
 $leaderboardQuery = "
     SELECT 
@@ -117,9 +120,12 @@ $leaderboardQuery = "
     ORDER BY total_sessions DESC
     LIMIT 5
 ";
+
 $result = $conn->query($leaderboardQuery);
-while ($row = $result->fetch_assoc()) {
-    $leaderboardData[] = $row;
+if ($result) {
+    while ($row = $result->fetch_assoc()) {
+        $leaderboardData[] = $row;
+    }
 }
 ?>
 <!DOCTYPE html>
