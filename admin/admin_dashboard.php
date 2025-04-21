@@ -106,18 +106,24 @@ $yearLevelLabelsJSON = json_encode(array_keys($yearLevelCounts)); // Fixed from 
 // Initialize leaderboard array
 $leaderboardData = [];
 
-// Get leaderboard data for top 5 most active students
+// Update the leaderboard query to handle point limits
 $leaderboardQuery = "
     SELECT 
         u.FIRST_NAME,
         u.LAST_NAME,
         u.YEAR_LEVEL,
         u.UPLOAD_IMAGE,
-        COUNT(c.SITIN_ID) as total_sessions
+        COUNT(c.SITIN_ID) as total_sessions,
+        CASE 
+            WHEN (COUNT(c.SITIN_ID) * 10 + 
+                 SUM(TIMESTAMPDIFF(HOUR, c.TIME_IN, COALESCE(c.TIME_OUT, NOW()))) * 5) > 3 THEN 0
+            ELSE (COUNT(c.SITIN_ID) * 10 + 
+                 SUM(TIMESTAMPDIFF(HOUR, c.TIME_IN, COALESCE(c.TIME_OUT, NOW()))) * 5)
+        END as total_points
     FROM users u
     LEFT JOIN curr_sitin c ON u.IDNO = c.IDNO
     GROUP BY u.IDNO, u.FIRST_NAME, u.LAST_NAME, u.YEAR_LEVEL, u.UPLOAD_IMAGE
-    ORDER BY total_sessions DESC
+    ORDER BY total_points DESC, total_sessions DESC
     LIMIT 5
 ";
 
@@ -315,6 +321,7 @@ if ($result) {
                     <h2 class="text-xl font-bold tracking-wider uppercase relative z-10">Student Leaderboard</h2>
                 </div>
                 
+                <!-- Leaderboard Card Content -->
                 <div class="p-6">
                     <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
                         <?php foreach ($leaderboardData as $index => $student): ?>
@@ -331,25 +338,25 @@ if ($result) {
                                     <div class="text-2xl mb-1">
                                         <?php
                                         switch($index) {
-                                            case 0: echo '🥇'; break;
+                                            case 0: echo '🏆'; break;
                                             case 1: echo '🥈'; break;
                                             case 2: echo '🥉'; break;
-                                            case 3: echo '🏅'; break; // 4th place medal
-                                            case 4: echo '🎖️'; break; // 5th place medal
+                                            case 3: echo '🏅'; break;
+                                            case 4: echo '🎖️'; break;
                                             default: echo ($index + 1);
                                         }
                                         ?>
                                     </div>
                                     
-                                    <!-- Replace the Student Avatar div with this updated version -->
+                                    <!-- Student Avatar -->
                                     <div class="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center">
                                         <?php if (!empty($student['UPLOAD_IMAGE'])): ?>
                                             <img src="../images/<?php echo $student['UPLOAD_IMAGE']; ?>" 
                                                  alt="<?php echo htmlspecialchars($student['FIRST_NAME']); ?>" 
                                                  class="w-full h-full object-cover"
-                                                 onerror="this.onerror=null; this.src='../images/default.jpg';">
+                                                 onerror="this.onerror=null; this.src='../images/image.jpg';">
                                         <?php else: ?>
-                                            <img src="../images/default.jpg" 
+                                            <img src="../images/image.jpg" 
                                                  alt="Default Profile" 
                                                  class="w-full h-full object-cover">
                                         <?php endif; ?>
@@ -366,18 +373,39 @@ if ($result) {
                                     </div>
                                     
                                     <!-- Stats -->
-                                    <div class="text-sm space-y-1">
-                                        <div class="font-semibold text-purple-600">
-                                            <?php echo $student['total_sessions'] ?? 0; ?> sessions
+                                    <div class="text-sm space-y-2">
+                                        <!-- Total Points -->
+                                        <div class="font-bold text-lg text-indigo-600">
+                                            <?php 
+                                            $points = $student['total_points'];
+                                            if ($points > 3) {
+                                                echo '0 pts';
+                                                echo '<span class="text-xs text-red-500 block">(Points Reset)</span>';
+                                            } else {
+                                                echo number_format($points) . ' pts';
+                                            }
+                                            ?>
                                         </div>
+                                        
+                                        <!-- Sessions -->
+                                        <div class="font-medium text-purple-600">
+                                            <i class="fas fa-calendar-check mr-1"></i>
+                                            <?php echo $student['total_sessions']; ?> sessions
+                                        </div>
+                                        
+                                        <!-- Rank Badge -->
                                         <div class="text-amber-500 font-medium text-xs">
                                             <?php 
-                                            if ($student['total_sessions'] > 20) {
-                                                echo '⭐ Most Active';
-                                            } elseif ($student['total_sessions'] > 10) {
-                                                echo '✨ Active';
+                                            if ($points > 3) {
+                                                echo '🔄 Points Reset';
+                                            } elseif ($points == 3) {
+                                                echo '⭐ Maximum Points';
+                                            } elseif ($points == 2) {
+                                                echo '✨ Advanced';
+                                            } elseif ($points == 1) {
+                                                echo '📚 Active';
                                             } else {
-                                                echo '📚 Regular';
+                                                echo '🌱 New';
                                             }
                                             ?>
                                         </div>
