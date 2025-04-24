@@ -191,7 +191,7 @@ if (!$result) {
                     <span class="font-medium">SIT-IN REPORT</span>
                 </a>
 
-                <a href="#" class="group px-3 py-2 text-white/90 hover:bg-white/20 rounded-lg transition-all duration-200 flex items-center">
+                <a href="admin_reservation.php" class="group px-3 py-2 text-white/90 hover:bg-white/20 rounded-lg transition-all duration-200 flex items-center">
                     <i class="fas fa-calendar-check w-5 mr-2 text-center"></i>
                     <span class="font-medium">RESERVATION/APPROVAL</span>
                 </a>

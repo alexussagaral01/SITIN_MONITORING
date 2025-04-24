@@ -27,6 +27,25 @@ if ($userId) {
     $studentName = 'Guest';
 }
 
+// Add this near the top with other PHP handlers
+if (isset($_GET['get_pc_status'])) {
+    $lab = $_GET['lab'];
+    // Updated query to get PCs from computer table
+    $stmt = $conn->prepare("SELECT PC_NUM, STATUS FROM computer WHERE LABORATORY = ? ORDER BY PC_NUM ASC");
+    $labName = 'lab' . $lab; // Convert lab number to format stored in database (e.g., 'lab524')
+    $stmt->bind_param("s", $labName);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $pcStatus = [];
+    while ($row = $result->fetch_assoc()) {
+        $pcStatus[$row['PC_NUM']] = strtoupper($row['STATUS']);
+    }
+    $stmt->close();
+    echo json_encode($pcStatus);
+    exit;
+}
+
 // Process reservation form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Get form data
@@ -38,21 +57,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Validate and insert reservation
     if (!empty($purpose) && !empty($lab) && !empty($date) && !empty($timeIn) && !empty($pcNumber)) {
-        $stmt = $conn->prepare("INSERT INTO reservations (student_id, student_name, purpose, lab_number, reservation_date, time_in, pc_number) 
-                               VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("isssssi", $userId, $studentName, $purpose, $lab, $date, $timeIn, $pcNumber);
+        // Insert into reservation table
+        $stmt = $conn->prepare("INSERT INTO reservation (IDNO, FULL_NAME, COURSE, YEAR_LEVEL, PURPOSE, LABORATORY, PC_NUM, DATE, TIME_IN) 
+                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        
+        $course = "BS IN INFORMATION TECHNOLOGY";
+        $yearLevel = "3rd Year";
+        
+        $stmt->bind_param("issssssss", 
+            $idNumber,
+            $studentName,
+            $course,
+            $yearLevel,
+            $purpose,
+            $lab,
+            $pcNumber,
+            $date,
+            $timeIn
+        );
         
         if ($stmt->execute()) {
-            // Success message
-            $successMessage = "Reservation confirmed successfully!";
+            // Store success message in session
+            $_SESSION['successMessage'] = "Reservation confirmed successfully!";
+            // Redirect to prevent form resubmission
+            header("Location: " . $_SERVER['PHP_SELF']);
+            exit;
         } else {
-            $errorMessage = "Error: " . $stmt->error;
+            $_SESSION['errorMessage'] = "Error: " . $stmt->error;
         }
         $stmt->close();
     } else {
-        $errorMessage = "All fields are required";
+        $_SESSION['errorMessage'] = "All fields are required";
     }
 }
+
+// Get messages from session
+$successMessage = isset($_SESSION['successMessage']) ? $_SESSION['successMessage'] : null;
+$errorMessage = isset($_SESSION['errorMessage']) ? $_SESSION['errorMessage'] : null;
+
+// Clear messages from session
+unset($_SESSION['successMessage']);
+unset($_SESSION['errorMessage']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -65,6 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="icon" href="../logo/ccs.png" type="image/x-icon">
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -184,9 +230,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Main Content: Reservation & PC Selection -->
     <div class="container mx-auto p-4">
         <?php if (isset($successMessage)): ?>
-            <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4">
-                <p class="font-medium"><?php echo $successMessage; ?></p>
-            </div>
+            <script>
+                Swal.fire({
+                    title: 'Success!',
+                    text: '<?php echo $successMessage; ?>',
+                    icon: 'success',
+                    confirmButtonText: 'Okay',
+                    confirmButtonColor: '#6366f1',
+                    customClass: {
+                        container: 'font-poppins'
+                    }
+                });
+            </script>
         <?php endif; ?>
         
         <?php if (isset($errorMessage)): ?>
@@ -232,7 +287,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     class="flex-1 p-3 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed focus:ring-2 focus:ring-purple-500/50" readonly placeholder="Year Level">
                             </div>
                             <!-- Purpose -->
-                            <div class="flex items-center gap-4">
+                            <div class="flex items-center gap-4 md:col-span-2">
                                 <i class="fas fa-tasks text-purple-500"></i>
                                 <select id="purpose" name="purpose" required
                                     class="flex-1 p-3 border border-gray-300 rounded-lg bg-white hover:border-purple-400 focus:ring-2 focus:ring-purple-500/50 transition-colors duration-200">
@@ -242,7 +297,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <option value="C# Programming">C# Programming</option>
                                     <option value="Java Programming">Java Programming</option>
                                     <option value="Python Programming">Python Programming</option>
-                                    <option value="Other">Other</option>
+                                    <option value="Database">Database</option>
+                                    <option value="Digital Logic & Design">Digital Logic & Design</option>
+                                    <option value="Embedded System & IOT">Embedded System & IOT</option>
+                                    <option value="System Integration & Architecture">System Integration & Architecture</option>
+                                    <option value="Computer Application">Computer Application</option>
+                                    <option value="Web Design & Development">Web Design & Development</option>
+                                    <option value="Project Management">Project Management</option>
                                 </select>
                             </div>
                             <!-- Laboratory -->
@@ -252,7 +313,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     class="flex-1 p-3 border border-gray-300 rounded-lg bg-white hover:border-purple-400 focus:ring-2 focus:ring-purple-500/50 transition-colors duration-200" 
                                     onchange="updatePcOptions()">
                                     <option value="" disabled selected>Select Laboratory</option>
-                                    <?php foreach ([524, 526, 528, 530, 542, 544] as $labNumber): ?>
+                                    <?php foreach ([517, 524, 526, 528, 530, 542, 544] as $labNumber): ?>
                                         <option value="<?php echo $labNumber; ?>"><?php echo $labNumber; ?></option>
                                     <?php endforeach; ?>
                                 </select>
@@ -301,17 +362,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                     
                     <div class="p-4">
-                        <div class="mb-4">
-                            <select id="lab_selector" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500/50" onchange="syncLabSelectors()">
-                                <option value="" disabled selected>Select Laboratory</option>
-                                <?php foreach ([524, 526, 528, 530, 542, 544] as $labNumber): ?>
-                                    <option value="<?php echo $labNumber; ?>"><?php echo $labNumber; ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        
                         <div id="pc_message" class="text-center py-6 text-gray-500">
-                            Please select a laboratory to view available PCs
+                            Please select a laboratory from the reservation form to view available PCs
                         </div>
                         
                         <div id="pc_grid" class="hidden grid grid-cols-5 gap-4 p-4 max-h-96 overflow-y-auto">
@@ -350,68 +402,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             sidenav.classList.remove("animate-slide-in");
         }
         
-        // Function to synchronize laboratory selectors
-        function syncLabSelectors() {
-            const labSelector = document.getElementById('lab_selector');
-            const mainLabSelector = document.getElementById('lab');
-            
-            if (labSelector.value) {
-                mainLabSelector.value = labSelector.value;
-                generatePcGrid(labSelector.value);
-            }
-        }
-        
         // Function to update PC selector based on selected lab
         function updatePcOptions() {
             const labSelector = document.getElementById('lab');
-            const pcLabSelector = document.getElementById('lab_selector');
             
             if (labSelector.value) {
-                pcLabSelector.value = labSelector.value;
-                generatePcGrid(labSelector.value);
+                fetchPcStatus(labSelector.value);
+            } else {
+                // Hide PC grid and show message if no lab is selected
+                document.getElementById('pc_grid').classList.add('hidden');
+                document.getElementById('pc_message').classList.remove('hidden');
             }
         }
         
+        // Function to fetch PC status from the server
+        function fetchPcStatus(labNumber) {
+            fetch(`reservation.php?get_pc_status=1&lab=${labNumber}`)
+                .then(response => response.json())
+                .then(data => generatePcGrid(data))
+                .catch(error => console.error('Error fetching PC status:', error));
+        }
+        
         // Function to generate PC grid with cards
-        function generatePcGrid(labNumber) {
+        function generatePcGrid(pcStatus) {
             const pcGrid = document.getElementById('pc_grid');
             const pcMessage = document.getElementById('pc_message');
 
-            if (labNumber) {
-                // Show PC grid and hide message
-                pcGrid.classList.remove('hidden');
-                pcMessage.classList.add('hidden');
+            // Show PC grid and hide message
+            pcGrid.classList.remove('hidden');
+            pcMessage.classList.add('hidden');
 
-                // Clear existing content
-                pcGrid.innerHTML = '';
+            // Clear existing content
+            pcGrid.innerHTML = '';
 
-                // Generate PC cards
-                for (let i = 1; i <= 50; i++) {
-                    const pcCard = document.createElement('div');
-                    pcCard.className = 'rounded-lg border border-gray-200 overflow-hidden shadow-sm transition-all duration-200 hover:shadow-md';
-                    pcCard.setAttribute('data-pc', i);
-                    pcCard.onclick = function() { selectPC(i); };
-
-                    // Create card content
-                    pcCard.innerHTML = `
-                        <div class="flex flex-col items-center justify-center p-3">
-                            <div class="text-purple-700 mb-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                            </div>
-                            <div class="text-center text-sm font-medium text-gray-800">PC ${i}</div>
-                            <div class="mt-1 bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">AVAILABLE</div>
-                        </div>
-                    `;
-
-                    pcGrid.appendChild(pcCard);
-                }
-            } else {
-                // Hide PC grid and show message
-                pcGrid.classList.add('hidden');
+            if (Object.keys(pcStatus).length === 0) {
+                pcMessage.textContent = 'No PCs found for this laboratory';
                 pcMessage.classList.remove('hidden');
+                pcGrid.classList.add('hidden');
+                return;
             }
+
+            // Generate PC cards only for PCs in the database
+            Object.entries(pcStatus).forEach(([pcNum, status]) => {
+                const pcCard = document.createElement('div');
+                pcCard.className = 'rounded-lg border border-gray-200 overflow-hidden shadow-sm transition-all duration-200 hover:shadow-md';
+                pcCard.setAttribute('data-pc', pcNum);
+                pcCard.onclick = function() { selectPC(pcNum); };
+
+                const isAvailable = status.toUpperCase() === 'AVAILABLE';
+                const statusClass = isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+
+                pcCard.innerHTML = `
+                    <div class="flex flex-col items-center justify-center p-3">
+                        <div class="text-purple-700 mb-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                        <div class="text-center text-sm font-medium text-gray-800">PC ${pcNum}</div>
+                        <div class="mt-1 ${statusClass} text-xs font-medium px-2.5 py-0.5 rounded-full">${status}</div>
+                    </div>
+                `;
+
+                if (!isAvailable) {
+                    pcCard.classList.add('cursor-not-allowed', 'opacity-50');
+                    pcCard.onclick = null;
+                }
+
+                pcGrid.appendChild(pcCard);
+            });
         }
 
         // Function to handle PC selection
