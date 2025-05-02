@@ -26,10 +26,26 @@ $count_result = mysqli_query($conn, $count_query);
 $count_row = mysqli_fetch_assoc($count_result);
 $total_records = $count_row['total'];
 
-// Modify query to show student information and points
-$query = "SELECT users.*, 
-          COALESCE(users.POINTS, 0) as points
+// Modify query to show student information, points, and update sessions/points
+$query = "SELECT 
+            users.*,
+            CASE 
+                WHEN POINTS >= 3 THEN 0
+                ELSE POINTS 
+            END as points,
+            CASE 
+                WHEN POINTS >= 3 THEN SESSION + 1
+                ELSE SESSION 
+            END as sessions
           FROM users";
+
+// Update points and sessions if points reach 3
+$update_query = "UPDATE users 
+                SET SESSION = SESSION + 1,
+                    POINTS = 0 
+                WHERE POINTS >= 3";
+mysqli_query($conn, $update_query);
+
 if (!empty($search)) {
     $query .= " WHERE users.IDNO LIKE '%$search%' 
                 OR users.LAST_NAME LIKE '%$search%' 
@@ -250,7 +266,6 @@ if (!$result) {
                                 <th class="px-6 py-3 text-left">Year Level</th>
                                 <th class="px-6 py-3 text-center">Points</th>
                                 <th class="px-6 py-3 text-center">Session</th>
-                                <th class="px-6 py-3 text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody id="tableBody" class="bg-white">
@@ -264,19 +279,11 @@ if (!$result) {
                                     echo "<td class='px-6 py-4'>" . $row['COURSE'] . "</td>";
                                     echo "<td class='px-6 py-4'>" . $row['YEAR_LEVEL'] . "</td>";
                                     echo "<td class='px-6 py-4 text-center'>" . $row['points'] . "</td>";
-                                    echo "<td class='px-6 py-4 text-center'>" . $row['SESSION'] . "</td>";
-                                    echo "<td class='px-6 py-4 flex justify-center'>
-                                            <button onclick='addPoints(" . $row['STUD_NUM'] . ")' 
-                                                class='bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg flex items-center gap-2' 
-                                                title='Add Points'>
-                                                <i class='fas fa-plus-circle'></i>
-                                                Add Points
-                                            </button>
-                                          </td>";
+                                    echo "<td class='px-6 py-4 text-center'>" . $row['sessions'] . "</td>";
                                     echo "</tr>";
                                 }
                             } else {
-                                echo "<tr><td colspan='7' class='px-6 py-4 text-center text-gray-500 italic'>No data available</td></tr>";
+                                echo "<tr><td colspan='6' class='px-6 py-4 text-center text-gray-500 italic'>No data available</td></tr>";
                             }
                             ?>
                         </tbody>
@@ -396,45 +403,6 @@ if (!$result) {
         function changePage(page) {
             const entries = document.getElementById('entriesPerPage').value;
             window.location.href = `admin_lab_usage.php?entries=${entries}&page=${page}`;
-        }
-
-        function addPoints(studentId) {
-            fetch('add_points.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: 'studentId=' + studentId
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success!',
-                        text: 'Points updated successfully!',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        // Reload the page to update the table
-                        window.location.reload();
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error!',
-                        text: data.message
-                    });
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error!',
-                    text: 'Something went wrong!'
-                });
-            });
         }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

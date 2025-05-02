@@ -312,8 +312,8 @@ $offset = ($current_page - 1) * $entries_per_page;
                                 echo "<td class='px-6 py-4'>" . htmlspecialchars($row['FEEDBACK']) . "</td>";
                                 echo "<td class='px-6 py-4'>";
                                 echo "<button onclick=\"deleteFeedback(" . $row['FEEDBACK_ID'] . ")\" 
-                                        class='bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm transition duration-200'>
-                                        Delete
+                                        class='text-red-500 hover:text-red-700 transition-colors text-lg'>
+                                        <i class='fas fa-trash-alt'></i>
                                       </button>";
                                 echo "</td>";
                                 echo "</tr>";
@@ -411,17 +411,27 @@ $offset = ($current_page - 1) * $entries_per_page;
         }
 
         function deleteFeedback(feedbackId) {
-            Swal.fire({
-                title: 'Are you sure?',
-                text: "You won't be able to revert this!",
-                icon: 'warning',
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-right',
+                iconColor: 'white',
+                customClass: {
+                    popup: 'colored-toast'
+                },
+                showConfirmButton: true,
                 showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, delete it!'
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel',
+                timer: false
+            });
+
+            Toast.fire({
+                icon: 'warning',
+                title: 'Are you sure to delete?',
+                text: 'You won\'t be able to revert this!',
+                background: '#F59E0B'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Send delete request
                     fetch('delete_feedback.php', {
                         method: 'POST',
                         headers: {
@@ -432,27 +442,63 @@ $offset = ($current_page - 1) * $entries_per_page;
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            Swal.fire(
-                                'Deleted!',
-                                'Feedback has been deleted.',
-                                'success'
-                            ).then(() => {
-                                location.reload();
+                            const SuccessToast = Swal.mixin({
+                                toast: true,
+                                position: 'top-right',
+                                iconColor: 'white',
+                                customClass: {
+                                    popup: 'colored-toast'
+                                },
+                                showConfirmButton: false,
+                                timer: 1500,
+                                timerProgressBar: true
+                            });
+                            
+                            SuccessToast.fire({
+                                icon: 'success',
+                                title: 'Feedback deleted successfully',
+                                background: '#10B981'
+                            }).then(() => {
+                                window.location.reload();
                             });
                         } else {
-                            Swal.fire(
-                                'Error!',
-                                'Failed to delete feedback: ' + data.message,
-                                'error'
-                            );
+                            const ErrorToast = Swal.mixin({
+                                toast: true,
+                                position: 'top-right',
+                                iconColor: 'white',
+                                customClass: {
+                                    popup: 'colored-toast'
+                                },
+                                showConfirmButton: false,
+                                timer: 1500,
+                                timerProgressBar: true
+                            });
+                            
+                            ErrorToast.fire({
+                                icon: 'error',
+                                title: data.message || 'Failed to delete feedback',
+                                background: '#EF4444'
+                            });
                         }
                     })
                     .catch(error => {
-                        Swal.fire(
-                            'Error!',
-                            'An error occurred while deleting: ' + error,
-                            'error'
-                        );
+                        const ErrorToast = Swal.mixin({
+                            toast: true,
+                            position: 'top-right',
+                            iconColor: 'white',
+                            customClass: {
+                                popup: 'colored-toast'
+                            },
+                            showConfirmButton: false,
+                            timer: 1500,
+                            timerProgressBar: true
+                        });
+                        
+                        ErrorToast.fire({
+                            icon: 'error',
+                            title: 'Error deleting feedback',
+                            background: '#EF4444'
+                        });
                     });
                 }
             });

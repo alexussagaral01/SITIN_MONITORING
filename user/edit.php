@@ -220,6 +220,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             background-clip: text;
             display: inline-block;
         }
+        .colored-toast.swal2-icon-success {
+            background-color: #10B981 !important;
+        }
+        .colored-toast.swal2-icon-error {
+            background-color: #EF4444 !important;
+        }
+        .colored-toast {
+            color: #fff !important;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-indigo-900 via-purple-800 to-pink-700 min-h-screen font-poppins">
@@ -718,10 +727,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    Swal.fire({
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: 'top-right',
+                        iconColor: 'white',
+                        customClass: {
+                            popup: 'colored-toast'
+                        },
+                        showConfirmButton: false,
+                        timer: 1500,
+                        timerProgressBar: true
+                    });
+                    Toast.fire({
                         icon: 'success',
-                        title: 'Success!',
-                        text: data.message
+                        title: data.message,
+                        background: '#10B981'
                     }).then(() => {
                         // Update the profile image in the sidebar if it was changed
                         if (data.image) {
@@ -732,19 +752,41 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         }
                     });
                 } else {
-                    Swal.fire({
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: 'top-right',
+                        iconColor: 'white',
+                        customClass: {
+                            popup: 'colored-toast'
+                        },
+                        showConfirmButton: false,
+                        timer: 1500,
+                        timerProgressBar: true
+                    });
+                    Toast.fire({
                         icon: 'error',
-                        title: 'Error!',
-                        text: data.message
+                        title: data.message,
+                        background: '#EF4444'
                     });
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                Swal.fire({
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-right',
+                    iconColor: 'white',
+                    customClass: {
+                        popup: 'colored-toast'
+                    },
+                    showConfirmButton: false,
+                    timer: 1500,
+                    timerProgressBar: true
+                });
+                Toast.fire({
                     icon: 'error',
-                    title: 'Error!',
-                    text: 'An unexpected error occurred'
+                    title: 'An unexpected error occurred',
+                    background: '#EF4444'
                 });
             });
         });
@@ -775,22 +817,41 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
             
             if (errors.length > 0) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Password Requirements Not Met',
-                    html: errors.map(error => `<div class="text-left"><i class="fas fa-times-circle text-red-500 mr-2"></i>${error}</div>`).join('<br>'),
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-right',
+                    iconColor: 'white',
                     customClass: {
-                        container: 'password-policy-alert'
-                    }
+                        popup: 'colored-toast'
+                    },
+                    showConfirmButton: false,
+                    timer: 1500,
+                    timerProgressBar: true
+                });
+                Toast.fire({
+                    icon: 'error',
+                    title: 'Password requirements not met',
+                    background: '#EF4444'
                 });
                 return;
             }
             
             if (newPassword !== confirmPassword) {
-                Swal.fire({
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-right',
+                    iconColor: 'white',
+                    customClass: {
+                        popup: 'colored-toast'
+                    },
+                    showConfirmButton: false,
+                    timer: 1500,
+                    timerProgressBar: true
+                });
+                Toast.fire({
                     icon: 'error',
-                    title: 'Error!',
-                    text: 'New passwords do not match'
+                    title: 'Passwords do not match',
+                    background: '#EF4444'
                 });
                 return;
             }
@@ -804,10 +865,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    Swal.fire({
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: 'top-right',
+                        iconColor: 'white',
+                        customClass: {
+                            popup: 'colored-toast'
+                        },
+                        showConfirmButton: false,
+                        timer: 1500,
+                        timerProgressBar: true
+                    });
+                    Toast.fire({
                         icon: 'success',
-                        title: 'Success!',
-                        text: data.message
+                        title: data.message,
+                        background: '#10B981'
                     }).then(() => {
                         this.reset();
                         document.getElementById('passwordStrength').style.width = '0%';
@@ -815,31 +887,41 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         document.getElementById('strengthText').className = 'text-xs text-gray-500 mt-1';
                     });
                 } else {
-                    if (data.errors) {
-                        // Display multiple validation errors
-                        Swal.fire({
-                            icon: 'error',
-                            title: data.message,
-                            html: data.errors.map(error => `<div class="text-left"><i class="fas fa-times-circle text-red-500 mr-2"></i>${error}</div>`).join('<br>'),
-                            customClass: {
-                                container: 'password-policy-alert'
-                            }
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error!',
-                            text: data.message
-                        });
-                    }
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: 'top-right',
+                        iconColor: 'white',
+                        customClass: {
+                            popup: 'colored-toast'
+                        },
+                        showConfirmButton: false,
+                        timer: 1500,
+                        timerProgressBar: true
+                    });
+                    Toast.fire({
+                        icon: 'error',
+                        title: data.message,
+                        background: '#EF4444'
+                    });
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                Swal.fire({
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-right',
+                    iconColor: 'white',
+                    customClass: {
+                        popup: 'colored-toast'
+                    },
+                    showConfirmButton: false,
+                    timer: 1500,
+                    timerProgressBar: true
+                });
+                Toast.fire({
                     icon: 'error',
-                    title: 'Error!',
-                    text: 'An unexpected error occurred'
+                    title: 'An unexpected error occurred',
+                    background: '#EF4444'
                 });
             });
         });

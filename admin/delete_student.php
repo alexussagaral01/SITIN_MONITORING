@@ -10,27 +10,27 @@ if (!isset($_SESSION['admin']) || $_SESSION['admin'] !== true) {
 
 // Check if ID is provided and confirmed flag is set
 if (isset($_GET['id']) && isset($_GET['confirmed']) && $_GET['confirmed'] === 'true') {
-    $id = mysqli_real_escape_string($conn, $_GET['id']);
+    $studentId = (int)$_GET['id'];
     
-    // Delete the student
-    $query = "DELETE FROM users WHERE STUD_NUM = '$id'";
+    $stmt = $conn->prepare("DELETE FROM users WHERE STUD_NUM = ?");
+    $stmt->bind_param("i", $studentId);
     
-    if (mysqli_query($conn, $query)) {
-        // Success - redirect with success flag
-        header("Location: admin_studlist.php?deleted=success");
-        exit;
+    if ($stmt->execute()) {
+        $_SESSION['toast'] = [
+            'icon' => 'success',
+            'title' => 'Student deleted successfully',
+            'background' => '#10B981'
+        ];
     } else {
-        // Error - redirect with error flag
-        header("Location: admin_studlist.php?deleted=error");
-        exit;
+        $_SESSION['toast'] = [
+            'icon' => 'error',
+            'title' => 'Failed to delete student',
+            'background' => '#EF4444'
+        ];
     }
-} elseif (isset($_GET['id'])) {
-    // If just ID is provided without confirmation, redirect back
-    header("Location: admin_studlist.php");
-    exit;
-} else {
-    // If no ID provided, redirect back
-    header("Location: admin_studlist.php");
-    exit;
+    $stmt->close();
 }
+
+header("Location: admin_studlist.php");
+exit();
 ?>

@@ -22,21 +22,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['time_in'])) {
     $result = $checkStmt->get_result();
     
     if ($result->num_rows > 0) {
-        // Store error message for SweetAlert
-        $_SESSION['swal_error'] = "Student already has an active sit-in session.";
+        $_SESSION['toast'] = [
+            'icon' => 'error',
+            'title' => 'Student already has an active sit-in session.',
+            'background' => '#EF4444'
+        ];
     } else {
         // Insert new sit-in record
         $stmt = $conn->prepare("INSERT INTO curr_sitin (IDNO, FULL_NAME, PURPOSE, LABORATORY, TIME_IN, DATE, STATUS) VALUES (?, ?, ?, ?, NOW(), CURDATE(), 'Active')");
         $stmt->bind_param("isss", $idno, $fullName, $purpose, $laboratory);
         
         if ($stmt->execute()) {
-            $_SESSION['swal_success'] = "Time-in recorded successfully.";
-            header("Location: admin_search.php");
-            exit();
+            $_SESSION['toast'] = [
+                'icon' => 'success',
+                'title' => 'Time-in recorded successfully',
+                'background' => '#10B981'
+            ];
         } else {
-            $_SESSION['swal_error'] = "Error recording time-in.";
+            $_SESSION['toast'] = [
+                'icon' => 'error',
+                'title' => 'Error recording time-in',
+                'background' => '#EF4444'
+            ];
         }
     }
+    header("Location: admin_search.php");
+    exit();
 }
 
 // Only fetch student data when search button is clicked via POST
@@ -49,6 +60,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['search']) && !empty($
     $stmt->execute();
     $result = $stmt->get_result();
     $student = $result->fetch_assoc();
+}
+
+// Add this after your session checks, before the HTML
+if (isset($_SESSION['toast'])) {
+    ?>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-right',
+                iconColor: 'white',
+                customClass: {
+                    popup: 'colored-toast'
+                },
+                showConfirmButton: false,
+                timer: 1500,
+                timerProgressBar: true
+            });
+            Toast.fire({
+                icon: '<?php echo $_SESSION['toast']['icon']; ?>',
+                title: '<?php echo $_SESSION['toast']['title']; ?>',
+                background: '<?php echo $_SESSION['toast']['background']; ?>'
+            });
+        });
+    </script>
+    <?php
+    unset($_SESSION['toast']);
 }
 ?>
 <!DOCTYPE html>
@@ -82,6 +120,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['search']) && !empty($
             -webkit-text-fill-color: transparent;
             background-clip: text;
             display: inline-block;
+        }
+        
+        .colored-toast.swal2-icon-success {
+            background-color: #10B981 !important;
+        }
+        .colored-toast.swal2-icon-error {
+            background-color: #EF4444 !important;
+        }
+        .colored-toast {
+            color: #fff !important;
         }
     </style>
 </head>
@@ -402,33 +450,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['search']) && !empty($
         }
 
         // SweetAlert for success and error messages
-        <?php if(isset($_SESSION['swal_error'])): ?>
-        Swal.fire({
-            icon: 'error',
-            title: 'Oops...',
-            text: '<?php echo $_SESSION['swal_error']; unset($_SESSION['swal_error']); ?>',
-            background: '#f3f4f6',
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-right',
+            iconColor: 'white',
             customClass: {
-                popup: 'rounded-lg',
-                title: 'text-xl font-bold text-gray-800',
-                content: 'text-gray-600'
-            }
+                popup: 'colored-toast'
+            },
+            showConfirmButton: false,
+            timer: 1500,
+            timerProgressBar: true
         });
-        <?php endif; ?>
+
+        <?php if(isset($_SESSION['swal_error'])): ?>
+        Toast.fire({
+            icon: 'error',
+            title: '<?php echo $_SESSION['swal_error']; ?>',
+            background: '#EF4444'
+        });
+        <?php unset($_SESSION['swal_error']); endif; ?>
 
         <?php if(isset($_SESSION['swal_success'])): ?>
-        Swal.fire({
+        Toast.fire({
             icon: 'success',
-            title: 'Success!',
-            text: '<?php echo $_SESSION['swal_success']; unset($_SESSION['swal_success']); ?>',
-            background: '#f3f4f6',
-            customClass: {
-                popup: 'rounded-lg',
-                title: 'text-xl font-bold text-gray-800',
-                content: 'text-gray-600'
-            }
+            title: '<?php echo $_SESSION['swal_success']; ?>',
+            background: '#10B981'
         });
-        <?php endif; ?>
+        <?php unset($_SESSION['swal_success']); endif; ?>
     </script>
 </body>
 </html>

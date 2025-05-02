@@ -19,13 +19,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $reservationId = $_POST['reservation_id'];
         
         // First get the reservation details
-        $getReservation = $conn->prepare("SELECT IDNO, FULL_NAME, LABORATORY, PC_NUM, DATE, TIME_IN FROM reservation WHERE ID = ?");
+        $getReservation = $conn->prepare("SELECT IDNO, FULL_NAME, LABORATORY, PC_NUM, DATE, TIME_IN, PURPOSE FROM reservation WHERE ID = ?");
         $getReservation->bind_param('i', $reservationId);
         $getReservation->execute();
         $result = $getReservation->get_result();
         $reservationData = $result->fetch_assoc();
         
         $newStatus = ($action === 'approve') ? 'Approved' : 'Disapproved';
+        
+        // Format laboratory name correctly (e.g., "524" to "Lab 524")
+        $formattedLab = "Lab " . $reservationData['LABORATORY'];
         
         // Begin transaction
         $conn->begin_transaction();
@@ -35,6 +38,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $updateStmt = $conn->prepare("UPDATE reservation SET STATUS = ? WHERE ID = ?");
             $updateStmt->bind_param('si', $newStatus, $reservationId);
             $updateStmt->execute();
+            
+            // If approved, insert into curr_sitin table and update computer status
+            if ($action === 'approve') {
+                // Insert into curr_sitin
+                $sitinStmt = $conn->prepare("INSERT INTO curr_sitin (IDNO, FULL_NAME, PURPOSE, LABORATORY, TIME_IN, DATE, STATUS) VALUES (?, ?, ?, ?, ?, ?, 'Active')");
+                $sitinStmt->bind_param('ssssss', 
+                    $reservationData['IDNO'],
+                    $reservationData['FULL_NAME'],
+                    $reservationData['PURPOSE'],
+                    $formattedLab,  // Use the formatted laboratory name
+                    $reservationData['TIME_IN'],
+                    $reservationData['DATE']
+                );
+                $sitinStmt->execute();
+
+                // Update computer status to 'used'
+                $labName = 'lab' . $reservationData['LABORATORY'];
+                $pcNum = $reservationData['PC_NUM'];
+                $usedStatus = 'used';
+                
+                $updateComputerStmt = $conn->prepare("INSERT INTO computer (LABORATORY, PC_NUM, STATUS) 
+                                                     VALUES (?, ?, ?) 
+                                                     ON DUPLICATE KEY UPDATE STATUS = ?");
+                $updateComputerStmt->bind_param('siss', 
+                    $labName,
+                    $pcNum,
+                    $usedStatus,
+                    $usedStatus
+                );
+                $updateComputerStmt->execute();
+            }
             
             // Insert into logs
             $logStmt = $conn->prepare("INSERT INTO reservation_logs (IDNO, FULL_NAME, LABORATORY, PC_NUM, DATE, TIME_IN, STATUS) VALUES (?, ?, ?, ?, ?, ?, ?)");
@@ -50,13 +84,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $logStmt->execute();
             
             $conn->commit();
+
+            $_SESSION['toast'] = [
+                'status' => 'success',
+                'message' => $action === 'approve' ? 'Reservation approved successfully' : 'Reservation disapproved successfully'
+            ];
             
             // Redirect to refresh the page
             header("Location: admin_reservation.php");
             exit;
         } catch (Exception $e) {
             $conn->rollback();
-            echo "Error: " . $e->getMessage();
+            $_SESSION['toast'] = [
+                'status' => 'error',
+                'message' => 'Failed to process reservation: ' . $e->getMessage()
+            ];
+            header("Location: admin_reservation.php");
+            exit;
         }
     }
 }
@@ -116,6 +160,33 @@ if (isset($_GET['get_all_pc_status'])) {
     echo json_encode($allPcStatus);
     exit;
 }
+
+// Add this before the HTML output
+if (isset($_SESSION['toast'])) {
+    ?>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-right',
+                iconColor: 'white',
+                customClass: {
+                    popup: 'colored-toast'
+                },
+                showConfirmButton: false,
+                timer: 1500,
+                timerProgressBar: true
+            });
+            Toast.fire({
+                icon: '<?php echo $_SESSION['toast']['status']; ?>',
+                title: '<?php echo $_SESSION['toast']['message']; ?>',
+                background: '<?php echo $_SESSION['toast']['status'] === 'success' ? '#10B981' : '#EF4444'; ?>'
+            });
+        });
+    </script>
+    <?php
+    unset($_SESSION['toast']);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -147,6 +218,15 @@ if (isset($_GET['get_all_pc_status'])) {
             -webkit-text-fill-color: transparent;
             background-clip: text;
             display: inline-block;
+        }
+        .colored-toast.swal2-icon-success {
+            background-color: #10B981 !important;
+        }
+        .colored-toast.swal2-icon-error {
+            background-color: #EF4444 !important;
+        }
+        .colored-toast {
+            color: #fff !important;
         }
     </style>
 </head>
@@ -541,33 +621,40 @@ if (isset($_GET['get_all_pc_status'])) {
             document.querySelectorAll('.pc-card').forEach(card => {
                 card.classList.remove('selected', 'ring-2', 'ring-purple-500', 'bg-purple-50');
                 
-                // Reset all PCs to default state first
-                card.style.backgroundColor = '';
-                card.style.borderColor = '';
+                // Set all PCs as available by default
+                card.style.backgroundColor = '#dcfce7';
+                card.style.borderColor = '#22c55e';
+                
+                // Add available label
+                const pcNum = card.getAttribute('data-pc');
+                const statusDiv = card.querySelector('.status-label') || document.createElement('div');
+                statusDiv.className = 'mt-1 bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full status-label';
+                statusDiv.textContent = 'Available';
+                if (!card.querySelector('.status-label')) {
+                    card.querySelector('.flex').appendChild(statusDiv);
+                }
             });
 
             // Show the grid
             document.getElementById('pc_message').classList.add('hidden');
             document.getElementById('pc_grid').classList.remove('hidden');
             
-            // Load this lab's status from database
+            // Load this lab's status from database to override defaults
             fetch(`admin_reservation.php?lab=${lab}`)
             .then(response => response.json())
             .then(data => {
-                // Update labStatuses for this lab
                 labStatuses[lab] = data;
                 
-                // Apply the statuses
+                // Apply any existing statuses from database
                 document.querySelectorAll('.pc-card').forEach(card => {
                     const pcNum = card.getAttribute('data-pc');
-                    if (labStatuses[lab] && labStatuses[lab][pcNum]) {
-                        const status = labStatuses[lab][pcNum];
-                        if (status === 'available') {
-                            card.style.backgroundColor = '#dcfce7';
-                            card.style.borderColor = '#22c55e';
-                        } else if (status === 'used') {
-                            card.style.backgroundColor = '#fee2e2';
-                            card.style.borderColor = '#ef4444';
+                    if (labStatuses[lab] && labStatuses[lab][pcNum] === 'used') {
+                        card.style.backgroundColor = '#fee2e2';
+                        card.style.borderColor = '#ef4444';
+                        const statusLabel = card.querySelector('.status-label');
+                        if (statusLabel) {
+                            statusLabel.className = 'mt-1 bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full status-label';
+                            statusLabel.textContent = 'Used';
                         }
                     }
                 });
@@ -604,12 +691,22 @@ if (isset($_GET['get_all_pc_status'])) {
                 selectedPCs.forEach(pcNum => {
                     labStatuses[lab][pcNum] = status;
                     const pcCard = document.querySelector(`[data-pc="${pcNum}"]`);
+                    const statusLabel = pcCard.querySelector('.status-label');
+                    
                     if (status === 'available') {
                         pcCard.style.backgroundColor = '#dcfce7';
                         pcCard.style.borderColor = '#22c55e';
+                        if (statusLabel) {
+                            statusLabel.className = 'mt-1 bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full status-label';
+                            statusLabel.textContent = 'Available';
+                        }
                     } else if (status === 'used') {
                         pcCard.style.backgroundColor = '#fee2e2';
                         pcCard.style.borderColor = '#ef4444';
+                        if (statusLabel) {
+                            statusLabel.className = 'mt-1 bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full status-label';
+                            statusLabel.textContent = 'Used';
+                        }
                     }
                 });
 

@@ -498,12 +498,21 @@ if ($userId) {
             const rating = document.getElementById('rating').value;
             
             if (rating === '0') {
-                Swal.fire({
-                    title: 'Rating Required',
-                    text: 'Please select a rating before submitting your feedback',
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-right',
+                    iconColor: 'white',
+                    customClass: {
+                        popup: 'colored-toast'
+                    },
+                    showConfirmButton: false,
+                    timer: 1500,
+                    timerProgressBar: true
+                });
+                Toast.fire({
                     icon: 'warning',
-                    confirmButtonText: 'OK',
-                    confirmButtonColor: '#4f46e5'
+                    title: 'Please select a rating',
+                    background: '#F59E0B'
                 });
                 return;
             }
@@ -515,38 +524,59 @@ if ($userId) {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // SweetAlert success message
-                    Swal.fire({
-                        title: 'Success!',
-                        text: 'Feedback Successfully Submitted',
-                        icon: 'success',
-                        confirmButtonText: 'OK',
-                        confirmButtonColor: '#4f46e5',
-                        timer: 3000,
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: 'top-right',
+                        iconColor: 'white',
+                        customClass: {
+                            popup: 'colored-toast'
+                        },
+                        showConfirmButton: false,
+                        timer: 1500,
                         timerProgressBar: true
                     });
-                    closeFeedbackModal();
-                    // Optionally refresh the page or update UI
-                    // setTimeout(() => location.reload(), 2000);
+                    Toast.fire({
+                        icon: 'success',
+                        title: 'Feedback submitted successfully',
+                        background: '#10B981'
+                    }).then(() => {
+                        closeFeedbackModal();
+                    });
                 } else {
-                    // SweetAlert error message
-                    Swal.fire({
-                        title: 'Error!',
-                        text: 'Error submitting feedback: ' + data.message,
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: 'top-right',
+                        iconColor: 'white',
+                        customClass: {
+                            popup: 'colored-toast'
+                        },
+                        showConfirmButton: false,
+                        timer: 1500,
+                        timerProgressBar: true
+                    });
+                    Toast.fire({
                         icon: 'error',
-                        confirmButtonText: 'OK',
-                        confirmButtonColor: '#d33'
+                        title: data.message || 'Error submitting feedback',
+                        background: '#EF4444'
                     });
                 }
             })
             .catch(error => {
-                // SweetAlert error message for network issues
-                Swal.fire({
-                    title: 'Error!',
-                    text: 'Network error submitting feedback. Please try again.',
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-right',
+                    iconColor: 'white',
+                    customClass: {
+                        popup: 'colored-toast'
+                    },
+                    showConfirmButton: false,
+                    timer: 1500,
+                    timerProgressBar: true
+                });
+                Toast.fire({
                     icon: 'error',
-                    confirmButtonText: 'OK',
-                    confirmButtonColor: '#d33'
+                    title: 'Network error. Please try again',
+                    background: '#EF4444'
                 });
             });
         }

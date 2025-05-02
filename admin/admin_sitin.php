@@ -2,6 +2,35 @@
 session_start();
 require '../db.php';
 
+// Display messages if they exist
+if (isset($_SESSION['success_message'])) {
+    echo "<script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: '" . $_SESSION['success_message'] . "',
+                confirmButtonColor: '#3085d6'
+            });
+        });
+    </script>";
+    unset($_SESSION['success_message']);
+}
+
+if (isset($_SESSION['error_message'])) {
+    echo "<script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error!',
+                text: '" . $_SESSION['error_message'] . "',
+                confirmButtonColor: '#d33'
+            });
+        });
+    </script>";
+    unset($_SESSION['error_message']);
+}
+
 // Check if admin is not logged in, redirect to login page
 if (!isset($_SESSION['admin']) || $_SESSION['admin'] !== true) {
     header("Location: ../login.php");
@@ -57,6 +86,7 @@ $current_sitins = $result->fetch_all(MYSQLI_ASSOC);
     <!-- Update Font Awesome to version 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" href="../logo/ccs.png" type="image/x-icon">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <title>Admin Sit-in</title>
@@ -79,6 +109,16 @@ $current_sitins = $result->fetch_all(MYSQLI_ASSOC);
             -webkit-text-fill-color: transparent;
             background-clip: text;
             display: inline-block;
+        }
+        
+        .colored-toast.swal2-icon-success {
+            background-color: #10B981 !important;
+        }
+        .colored-toast.swal2-icon-error {
+            background-color: #EF4444 !important;
+        }
+        .colored-toast {
+            color: #fff !important;
         }
     </style>
 </head>   
@@ -283,12 +323,18 @@ $current_sitins = $result->fetch_all(MYSQLI_ASSOC);
                                             </span>
                                         </td>
                                         <td class="px-6 py-4">
-                                            <form method="POST" action="time_out.php" class="inline">
-                                                <input type="hidden" name="sitin_id" value="<?php echo $sitin['SITIN_ID']; ?>">
-                                                <button type="submit" name="time_out" class="text-red-600 hover:text-red-800">
-                                                    <i class="fas fa-sign-out-alt"></i> Time-Out
+                                            <div class="flex items-center space-x-3">
+                                                <form method="POST" action="time_out.php" class="inline">
+                                                    <input type="hidden" name="sitin_id" value="<?php echo $sitin['SITIN_ID']; ?>">
+                                                    <button type="submit" class="text-red-600 hover:text-red-800 focus:outline-none" title="Time-Out">
+                                                        <i class="fas fa-sign-out-alt text-lg"></i>
+                                                    </button>
+                                                </form>
+                                                <button onclick="addPoint('<?php echo $sitin['IDNO']; ?>', '<?php echo $sitin['LABORATORY']; ?>')" 
+                                                        class="text-green-600 hover:text-green-800 focus:outline-none" title="Add Point">
+                                                    <i class="fas fa-plus-circle text-lg"></i>
                                                 </button>
-                                            </form>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -384,6 +430,126 @@ $current_sitins = $result->fetch_all(MYSQLI_ASSOC);
             const entries = document.getElementById('entriesPerPage').value;
             window.location.href = `admin_sitin.php?entries=${entries}&page=${page}`;
         }
+
+        function addPoint(idno, laboratory) {
+            fetch('add_point.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `idno=${idno}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: 'top-right',
+                        iconColor: 'white',
+                        customClass: {
+                            popup: 'colored-toast'
+                        },
+                        showConfirmButton: false,
+                        timer: 1500,
+                        timerProgressBar: true
+                    });
+                    Toast.fire({
+                        icon: 'success',
+                        title: 'Point added successfully',
+                        background: '#10B981'
+                    });
+                } else {
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: 'top-right',
+                        iconColor: 'white',
+                        customClass: {
+                            popup: 'colored-toast'
+                        },
+                        showConfirmButton: false,
+                        timer: 1500,
+                        timerProgressBar: true
+                    });
+                    Toast.fire({
+                        icon: 'error',
+                        title: data.message || 'Failed to add point',
+                        background: '#EF4444'
+                    });
+                }
+            })
+            .catch(error => {
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-right',
+                    iconColor: 'white',
+                    customClass: {
+                        popup: 'colored-toast'
+                    },
+                    showConfirmButton: false,
+                    timer: 1500,
+                    timerProgressBar: true
+                });
+                Toast.fire({
+                    icon: 'error',
+                    title: 'Error adding point',
+                    background: '#EF4444'
+                });
+            });
+        }
+
+        // Add this: Event listener for time-out form submission
+        document.addEventListener('DOMContentLoaded', function() {
+            const timeOutForms = document.querySelectorAll('form[action="time_out.php"]');
+            timeOutForms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    fetch('time_out.php', {
+                        method: 'POST',
+                        body: new FormData(this)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if(data.success) {
+                            const Toast = Swal.mixin({
+                                toast: true,
+                                position: 'top-right',
+                                iconColor: 'white',
+                                customClass: {
+                                    popup: 'colored-toast'
+                                },
+                                showConfirmButton: false,
+                                timer: 1500,
+                                timerProgressBar: true
+                            });
+                            Toast.fire({
+                                icon: 'success',
+                                title: 'Time-out successful',
+                                background: '#10B981'
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        } else {
+                            const Toast = Swal.mixin({
+                                toast: true,
+                                position: 'top-right',
+                                iconColor: 'white',
+                                customClass: {
+                                    popup: 'colored-toast'
+                                },
+                                showConfirmButton: false,
+                                timer: 1500,
+                                timerProgressBar: true
+                            });
+                            Toast.fire({
+                                icon: 'error',
+                                title: data.message || 'Failed to time-out',
+                                background: '#EF4444'
+                            });
+                        }
+                    });
+                });
+            });
+        });
     </script>
 </body>
 </html>

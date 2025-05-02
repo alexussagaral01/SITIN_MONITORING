@@ -103,6 +103,16 @@ $result = mysqli_query($conn, $query);
             background-clip: text;
             display: inline-block;
         }
+        
+        .colored-toast.swal2-icon-success {
+            background-color: #10B981 !important;
+        }
+        .colored-toast.swal2-icon-error {
+            background-color: #EF4444 !important;
+        }
+        .colored-toast {
+            color: #fff !important;
+        }
     </style>
 </head>   
 <body class="bg-gradient-to-br from-indigo-900 via-purple-800 to-pink-700 min-h-screen font-poppins">
@@ -505,16 +515,28 @@ $result = mysqli_query($conn, $query);
         
         // SweetAlert confirmation for delete
         function confirmDelete(studentId) {
-            Swal.fire({
-                title: 'Are you sure?',
-                text: "You won't be able to revert this!",
-                icon: 'warning',
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-right',
+                iconColor: 'white',
+                customClass: {
+                    popup: 'colored-toast'
+                },
+                showConfirmButton: true,
                 showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, delete it!'
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel',
+                timer: false
+            });
+
+            Toast.fire({
+                icon: 'warning',
+                title: 'Are you sure to delete?',
+                text: 'You won\'t be able to revert this!',
+                background: '#F59E0B'
             }).then((result) => {
                 if (result.isConfirmed) {
+                    // Send deletion request
                     window.location.href = 'delete_student.php?id=' + studentId + '&confirmed=true';
                 }
             });
@@ -522,14 +544,25 @@ $result = mysqli_query($conn, $query);
         
         // Reset all sessions with SweetAlert
         document.getElementById('resetSessionBtn').addEventListener('click', function() {
-            Swal.fire({
-                title: 'Reset All Sessions?',
-                text: "This will reset ALL student sessions back to 30. Are you sure?",
-                icon: 'warning',
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-right',
+                iconColor: 'white',
+                customClass: {
+                    popup: 'colored-toast'
+                },
+                showConfirmButton: true,
                 showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, reset all!'
+                confirmButtonText: 'Yes, reset all!',
+                cancelButtonText: 'Cancel',
+                timer: false
+            });
+
+            Toast.fire({
+                icon: 'warning',
+                title: 'Reset All Sessions?',
+                text: 'This will reset ALL student sessions back to 30',
+                background: '#F59E0B'
             }).then((result) => {
                 if (result.isConfirmed) {
                     // Use fetch API to call reset_all_session.php
@@ -542,32 +575,63 @@ $result = mysqli_query($conn, $query);
                     .then(response => response.json())
                     .then(data => {
                         if (data.status === 'success') {
-                            Swal.fire({
-                                title: 'Success!',
-                                text: data.message,
+                            const SuccessToast = Swal.mixin({
+                                toast: true,
+                                position: 'top-right',
+                                iconColor: 'white',
+                                customClass: {
+                                    popup: 'colored-toast'
+                                },
+                                showConfirmButton: false,
+                                timer: 1500,
+                                timerProgressBar: true
+                            });
+                            
+                            SuccessToast.fire({
                                 icon: 'success',
-                                confirmButtonText: 'OK'
+                                title: 'All sessions reset successfully',
+                                background: '#10B981'
                             }).then(() => {
-                                // Reload the page to refresh the table data
                                 window.location.reload();
                             });
                         } else {
-                            Swal.fire({
-                                title: 'Error!',
-                                text: data.message,
+                            const ErrorToast = Swal.mixin({
+                                toast: true,
+                                position: 'top-right',
+                                iconColor: 'white',
+                                customClass: {
+                                    popup: 'colored-toast'
+                                },
+                                showConfirmButton: false,
+                                timer: 1500,
+                                timerProgressBar: true
+                            });
+                            
+                            ErrorToast.fire({
                                 icon: 'error',
-                                confirmButtonText: 'OK'
+                                title: data.message || 'Failed to reset sessions',
+                                background: '#EF4444'
                             });
                         }
                     })
                     .catch(error => {
-                        Swal.fire({
-                            title: 'Error!',
-                            text: 'Something went wrong with the request.',
-                            icon: 'error',
-                            confirmButtonText: 'OK'
+                        const ErrorToast = Swal.mixin({
+                            toast: true,
+                            position: 'top-right',
+                            iconColor: 'white',
+                            customClass: {
+                                popup: 'colored-toast'
+                            },
+                            showConfirmButton: false,
+                            timer: 1500,
+                            timerProgressBar: true
                         });
-                        console.error('Error:', error);
+                        
+                        ErrorToast.fire({
+                            icon: 'error',
+                            title: 'Network error. Please try again',
+                            background: '#EF4444'
+                        });
                     });
                 }
             });
@@ -575,14 +639,25 @@ $result = mysqli_query($conn, $query);
 
         // Reset individual student session
         function confirmResetSession(studentId) {
-            Swal.fire({
-                title: 'Reset Session?',
-                text: "This will reset this student's session back to 30. Are you sure?",
-                icon: 'warning',
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-right',
+                iconColor: 'white',
+                customClass: {
+                    popup: 'colored-toast'
+                },
+                showConfirmButton: true,
                 showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, reset it!'
+                confirmButtonText: 'Yes, reset it!',
+                cancelButtonText: 'Cancel',
+                timer: false
+            });
+
+            Toast.fire({
+                icon: 'warning',
+                title: 'Reset Session?',
+                text: "This will reset this student's session back to 30",
+                background: '#F59E0B'
             }).then((result) => {
                 if (result.isConfirmed) {
                     fetch('reset_session.php', {
@@ -597,22 +672,63 @@ $result = mysqli_query($conn, $query);
                     .then(response => response.json())
                     .then(data => {
                         if (data.status === 'success') {
-                            Swal.fire({
-                                title: 'Success!',
-                                text: data.message,
+                            const SuccessToast = Swal.mixin({
+                                toast: true,
+                                position: 'top-right',
+                                iconColor: 'white',
+                                customClass: {
+                                    popup: 'colored-toast'
+                                },
+                                showConfirmButton: false,
+                                timer: 1500,
+                                timerProgressBar: true
+                            });
+                            
+                            SuccessToast.fire({
                                 icon: 'success',
-                                confirmButtonText: 'OK'
+                                title: 'Session reset successfully',
+                                background: '#10B981'
                             }).then(() => {
                                 window.location.reload();
                             });
                         } else {
-                            Swal.fire({
-                                title: 'Error!',
-                                text: data.message,
+                            const ErrorToast = Swal.mixin({
+                                toast: true,
+                                position: 'top-right',
+                                iconColor: 'white',
+                                customClass: {
+                                    popup: 'colored-toast'
+                                },
+                                showConfirmButton: false,
+                                timer: 1500,
+                                timerProgressBar: true
+                            });
+                            
+                            ErrorToast.fire({
                                 icon: 'error',
-                                confirmButtonText: 'OK'
+                                title: data.message || 'Failed to reset session',
+                                background: '#EF4444'
                             });
                         }
+                    })
+                    .catch(error => {
+                        const ErrorToast = Swal.mixin({
+                            toast: true,
+                            position: 'top-right',
+                            iconColor: 'white',
+                            customClass: {
+                                popup: 'colored-toast'
+                            },
+                            showConfirmButton: false,
+                            timer: 1500,
+                            timerProgressBar: true
+                        });
+                        
+                        ErrorToast.fire({
+                            icon: 'error',
+                            title: 'Network error. Please try again',
+                            background: '#EF4444'
+                        });
                     });
                 }
             });
@@ -646,17 +762,25 @@ $result = mysqli_query($conn, $query);
         document.addEventListener('DOMContentLoaded', function() {
             // Check for student added success message
             <?php if(isset($_SESSION['student_added']) && $_SESSION['student_added'] === true): ?>
-                Swal.fire({
-                    title: 'Success!',
-                    text: 'Student has been added successfully',
-                    icon: 'success',
-                    confirmButtonText: 'OK'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.href = 'admin_studlist.php';
-                    }
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-right',
+                    iconColor: 'white',
+                    customClass: {
+                        popup: 'colored-toast'
+                    },
+                    showConfirmButton: false,
+                    timer: 1500,
+                    timerProgressBar: true
                 });
-                <?php unset($_SESSION['student_added']); // Clear the session variable ?>
+                Toast.fire({
+                    icon: 'success',
+                    title: 'Student added successfully',
+                    background: '#10B981'
+                }).then(() => {
+                    window.location.href = 'admin_studlist.php';
+                });
+                <?php unset($_SESSION['student_added']); ?>
             <?php endif; ?>
             
             // Form validation for ID number

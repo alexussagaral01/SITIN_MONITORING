@@ -14,10 +14,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['new_announcement'])) 
 
     $stmt = $conn->prepare("INSERT INTO announcement (CONTENT, CREATED_DATE, CREATED_BY) VALUES (?, NOW(), ?)");
     $stmt->bind_param("ss", $content, $createdBy);
-    $stmt->execute();
+    
+    if ($stmt->execute()) {
+        $_SESSION['toast'] = [
+            'status' => 'success',
+            'message' => 'Announcement posted successfully!'
+        ];
+    } else {
+        $_SESSION['toast'] = [
+            'status' => 'error',
+            'message' => 'Failed to post announcement.'
+        ];
+    }
     $stmt->close();
     
-    // Redirect to refresh the page and prevent form resubmission
     header("Location: " . $_SERVER['PHP_SELF']);
     exit();
 }
@@ -133,6 +143,33 @@ if ($result) {
         $leaderboardData[] = $row;
     }
 }
+
+// Add this after your session checks
+if (isset($_SESSION['toast'])) {
+    ?>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-right',
+                iconColor: 'white',
+                customClass: {
+                    popup: 'colored-toast'
+                },
+                showConfirmButton: false,
+                timer: 1500,
+                timerProgressBar: true
+            });
+            Toast.fire({
+                icon: '<?php echo $_SESSION['toast']['status']; ?>',
+                title: '<?php echo $_SESSION['toast']['message']; ?>',
+                background: '<?php echo $_SESSION['toast']['status'] === 'success' ? '#10B981' : '#EF4444'; ?>'
+            });
+        });
+    </script>
+    <?php
+    unset($_SESSION['toast']);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -167,6 +204,16 @@ if ($result) {
             -webkit-text-fill-color: transparent;
             background-clip: text;
             display: inline-block;
+        }
+        
+        .colored-toast.swal2-icon-success {
+            background-color: #10B981 !important;
+        }
+        .colored-toast.swal2-icon-error {
+            background-color: #EF4444 !important;
+        }
+        .colored-toast {
+            color: #fff !important;
         }
     </style>
 </head>
@@ -587,40 +634,73 @@ if ($result) {
         
         // Add this function before the existing scripts
         function confirmDelete(id) {
-            Swal.fire({
-                title: 'Are you sure?',
-                text: "You won't be able to revert this!",
-                icon: 'warning',
+            // First show confirmation dialog
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-right',
+                iconColor: 'white',
+                customClass: {
+                    popup: 'colored-toast'
+                },
+                showConfirmButton: true,
                 showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, delete it!'
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel',
+                timer: false
+            });
+
+            Toast.fire({
+                icon: 'warning',
+                title: 'Are you sure to delete?',
+                text: 'You won\'t be able to revert this!',
+                background: '#F59E0B'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Send AJAX request to delete the announcement
+                    // Send AJAX request to delete
                     fetch(`delete_announcement.php?id=${id}`, {
                         method: 'GET'
                     })
                     .then(response => response.text())
                     .then(() => {
                         // Show success message
-                        Swal.fire({
-                            title: 'Deleted!',
-                            text: 'Announcement has been deleted successfully.',
+                        const SuccessToast = Swal.mixin({
+                            toast: true,
+                            position: 'top-right',
+                            iconColor: 'white',
+                            customClass: {
+                                popup: 'colored-toast'
+                            },
+                            showConfirmButton: false,
+                            timer: 1500,
+                            timerProgressBar: true
+                        });
+                        
+                        SuccessToast.fire({
                             icon: 'success',
-                            confirmButtonText: 'OK'
+                            title: 'Announcement deleted successfully',
+                            background: '#10B981'
                         }).then(() => {
-                            // Reload the page after clicking OK
                             window.location.reload();
                         });
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        Swal.fire({
-                            title: 'Error!',
-                            text: 'There was an error deleting the announcement.',
+                        const ErrorToast = Swal.mixin({
+                            toast: true,
+                            position: 'top-right',
+                            iconColor: 'white',
+                            customClass: {
+                                popup: 'colored-toast'
+                            },
+                            showConfirmButton: false,
+                            timer: 1500,
+                            timerProgressBar: true
+                        });
+                        
+                        ErrorToast.fire({
                             icon: 'error',
-                            confirmButtonText: 'OK'
+                            title: 'Failed to delete announcement',
+                            background: '#EF4444'
                         });
                     });
                 }
@@ -822,20 +902,60 @@ if ($result) {
                     document.getElementById(`content-${id}`).innerText = content;
                     // Hide edit form
                     cancelEdit(id);
-                    // Show success message
-                    Swal.fire({
+                    
+                    // Show toast notification
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: 'top-right',
+                        iconColor: 'white',
+                        customClass: {
+                            popup: 'colored-toast'
+                        },
+                        showConfirmButton: false,
+                        timer: 1500,
+                        timerProgressBar: true
+                    });
+                    Toast.fire({
                         icon: 'success',
-                        title: 'Updated!',
-                        text: 'Announcement has been updated successfully.',
-                        timer: 1500
+                        title: 'Announcement updated successfully',
+                        background: '#10B981'
                     });
                 } else {
-                    Swal.fire({
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: 'top-right',
+                        iconColor: 'white',
+                        customClass: {
+                            popup: 'colored-toast'
+                        },
+                        showConfirmButton: false,
+                        timer: 1500,
+                        timerProgressBar: true
+                    });
+                    Toast.fire({
                         icon: 'error',
-                        title: 'Error',
-                        text: 'Failed to update announcement'
+                        title: 'Failed to update announcement',
+                        background: '#EF4444'
                     });
                 }
+            })
+            .catch(error => {
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-right',
+                    iconColor: 'white',
+                    customClass: {
+                        popup: 'colored-toast'
+                    },
+                    showConfirmButton: false,
+                    timer: 1500,
+                    timerProgressBar: true
+                });
+                Toast.fire({
+                    icon: 'error',
+                    title: 'Error updating announcement',
+                    background: '#EF4444'
+                });
             });
         }
     </script>

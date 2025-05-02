@@ -12,10 +12,10 @@ $userId = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
 $firstName = isset($_SESSION['first_name']) ? $_SESSION['first_name'] : 'Guest';
 
 if ($userId) {
-    $stmt = $conn->prepare("SELECT UPLOAD_IMAGE, IDNO, FIRST_NAME, LAST_NAME FROM users WHERE STUD_NUM = ?");
+    $stmt = $conn->prepare("SELECT UPLOAD_IMAGE, IDNO, FIRST_NAME, LAST_NAME, COURSE, YEAR_LEVEL, SESSION FROM users WHERE STUD_NUM = ?");
     $stmt->bind_param("i", $userId);
     $stmt->execute();
-    $stmt->bind_result($userImage, $idNumber, $firstName, $lastName);
+    $stmt->bind_result($userImage, $idNumber, $firstName, $lastName, $userCourse, $userYearLevel, $userSessions);
     $stmt->fetch();
     $stmt->close();
     
@@ -25,6 +25,9 @@ if ($userId) {
     $profileImage = "../images/image.jpg";
     $idNumber = '';
     $studentName = 'Guest';
+    $userCourse = '';
+    $userYearLevel = '';
+    $userSessions = 0;
 }
 
 // Add this near the top with other PHP handlers
@@ -61,14 +64,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $conn->prepare("INSERT INTO reservation (IDNO, FULL_NAME, COURSE, YEAR_LEVEL, PURPOSE, LABORATORY, PC_NUM, DATE, TIME_IN) 
                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
         
-        $course = "BS IN INFORMATION TECHNOLOGY";
-        $yearLevel = "3rd Year";
-        
         $stmt->bind_param("issssssss", 
             $idNumber,
             $studentName,
-            $course,
-            $yearLevel,
+            $userCourse,    // Use the user's actual course
+            $userYearLevel, // Use the user's actual year level
             $purpose,
             $lab,
             $pcNumber,
@@ -131,6 +131,16 @@ unset($_SESSION['errorMessage']);
             -webkit-text-fill-color: transparent;
             background-clip: text;
             display: inline-block;
+        }
+        
+        .colored-toast.swal2-icon-success {
+            background-color: #10B981 !important;
+        }
+        .colored-toast.swal2-icon-error {
+            background-color: #EF4444 !important;
+        }
+        .colored-toast {
+            color: #fff !important;
         }
     </style>
 </head>
@@ -229,25 +239,35 @@ unset($_SESSION['errorMessage']);
 
     <!-- Main Content: Reservation & PC Selection -->
     <div class="container mx-auto p-4">
-        <?php if (isset($successMessage)): ?>
+        <?php if (isset($successMessage) || isset($errorMessage)): ?>
             <script>
-                Swal.fire({
-                    title: 'Success!',
-                    text: '<?php echo $successMessage; ?>',
-                    icon: 'success',
-                    confirmButtonText: 'Okay',
-                    confirmButtonColor: '#6366f1',
-                    customClass: {
-                        container: 'font-poppins'
-                    }
-                });
+                const showToast = (type, message) => {
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: 'top-right',
+                        iconColor: 'white',
+                        customClass: {
+                            popup: 'colored-toast'
+                        },
+                        showConfirmButton: false,
+                        timer: 1500,
+                        timerProgressBar: true
+                    });
+                    Toast.fire({
+                        icon: type,
+                        title: message,
+                        background: type === 'success' ? '#10B981' : '#EF4444'
+                    });
+                };
+
+                <?php if (isset($successMessage)): ?>
+                    showToast('success', '<?php echo $successMessage; ?>');
+                <?php endif; ?>
+                
+                <?php if (isset($errorMessage)): ?>
+                    showToast('error', '<?php echo $errorMessage; ?>');
+                <?php endif; ?>
             </script>
-        <?php endif; ?>
-        
-        <?php if (isset($errorMessage)): ?>
-            <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4">
-                <p class="font-medium"><?php echo $errorMessage; ?></p>
-            </div>
         <?php endif; ?>
         
         <div class="flex flex-col md:flex-row gap-6">
@@ -277,13 +297,13 @@ unset($_SESSION['errorMessage']);
                             <!-- Course -->
                             <div class="flex items-center gap-4">
                                 <i class="fas fa-graduation-cap text-purple-500"></i>
-                                <input type="text" id="course" name="course" value="BS-Information Technology" 
+                                <input type="text" id="course" name="course" value="<?php echo htmlspecialchars($userCourse); ?>" 
                                     class="flex-1 p-3 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed focus:ring-2 focus:ring-purple-500/50" readonly placeholder="Course">
                             </div>
                             <!-- Year Level -->
                             <div class="flex items-center gap-4">
                                 <i class="fas fa-calendar-alt text-purple-500"></i>
-                                <input type="text" id="year_level" name="year_level" value="3rd Year" 
+                                <input type="text" id="year_level" name="year_level" value="<?php echo htmlspecialchars($userYearLevel); ?>" 
                                     class="flex-1 p-3 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed focus:ring-2 focus:ring-purple-500/50" readonly placeholder="Year Level">
                             </div>
                             <!-- Purpose -->
@@ -334,8 +354,10 @@ unset($_SESSION['errorMessage']);
                             <!-- Remaining Sessions -->
                             <div class="flex items-center gap-4">
                                 <i class="fas fa-hourglass-half text-purple-500"></i>
-                                <input type="text" id="remaining_session" name="remaining_session" value="30" 
-                                    class="flex-1 p-3 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed focus:ring-2 focus:ring-purple-500/50" readonly placeholder="Remaining Sessions">
+                                <input type="text" id="remaining_session" name="remaining_session" 
+                                    value="<?php echo htmlspecialchars($userSessions); ?>" 
+                                    class="flex-1 p-3 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed focus:ring-2 focus:ring-purple-500/50" 
+                                    readonly placeholder="Remaining Sessions">
                             </div>
                             
                             <!-- Hidden PC input (will be updated by the PC selection panel) -->
@@ -428,29 +450,23 @@ unset($_SESSION['errorMessage']);
             const pcGrid = document.getElementById('pc_grid');
             const pcMessage = document.getElementById('pc_message');
 
-            // Show PC grid and hide message
             pcGrid.classList.remove('hidden');
             pcMessage.classList.add('hidden');
-
-            // Clear existing content
             pcGrid.innerHTML = '';
 
-            if (Object.keys(pcStatus).length === 0) {
-                pcMessage.textContent = 'No PCs found for this laboratory';
-                pcMessage.classList.remove('hidden');
-                pcGrid.classList.add('hidden');
-                return;
-            }
-
-            // Generate PC cards only for PCs in the database
-            Object.entries(pcStatus).forEach(([pcNum, status]) => {
-                const pcCard = document.createElement('div');
-                pcCard.className = 'rounded-lg border border-gray-200 overflow-hidden shadow-sm transition-all duration-200 hover:shadow-md';
-                pcCard.setAttribute('data-pc', pcNum);
-                pcCard.onclick = function() { selectPC(pcNum); };
-
+            // Initialize with all PCs as available
+            for (let i = 1; i <= 50; i++) {
+                const pcNum = i.toString();
+                const status = pcStatus[pcNum] || 'AVAILABLE';
                 const isAvailable = status.toUpperCase() === 'AVAILABLE';
                 const statusClass = isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+                
+                const pcCard = document.createElement('div');
+                pcCard.className = `rounded-lg border border-gray-200 overflow-hidden shadow-sm transition-all duration-200 hover:shadow-md ${!isAvailable ? 'opacity-50 cursor-not-allowed' : ''}`;
+                pcCard.setAttribute('data-pc', pcNum);
+                if (isAvailable) {
+                    pcCard.onclick = function() { selectPC(pcNum); };
+                }
 
                 pcCard.innerHTML = `
                     <div class="flex flex-col items-center justify-center p-3">
@@ -464,13 +480,8 @@ unset($_SESSION['errorMessage']);
                     </div>
                 `;
 
-                if (!isAvailable) {
-                    pcCard.classList.add('cursor-not-allowed', 'opacity-50');
-                    pcCard.onclick = null;
-                }
-
                 pcGrid.appendChild(pcCard);
-            });
+            }
         }
 
         // Function to handle PC selection
