@@ -77,6 +77,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         );
         
         if ($stmt->execute()) {
+            $reservationId = $stmt->insert_id;
+            
+            // Create notification for admin using your existing notification table
+            $notificationMessage = "$studentName ($userYearLevel) has requested a reservation for $lab on $date at $timeIn for $purpose.";
+            
+            $notifyStmt = $conn->prepare("INSERT INTO notification (RESERVATION_ID, MESSAGE, IS_READ, CREATED_AT) VALUES (?, ?, 0, NOW())");
+            $notifyStmt->bind_param("is", $reservationId, $notificationMessage);
+            $notifyStmt->execute();
+            $notifyStmt->close();
+            
             // Store success message in session
             $_SESSION['successMessage'] = "Reservation confirmed successfully!";
             // Redirect to prevent form resubmission
@@ -210,7 +220,7 @@ unset($_SESSION['errorMessage']);
                         x-transition:leave-end="opacity-0 transform -translate-y-2"
                         class="pl-7 mt-2 space-y-1">
                         
-                        <a href="lab_resource.php" class="group px-3 py-2 text-white/90 hover:bg-white/10 rounded-lg transition-all duration-200 flex items-center">
+                        <a href="lab_resources.php" class="group px-3 py-2 text-white/90 hover:bg-white/10 rounded-lg transition-all duration-200 flex items-center">
                             <i class="fas fa-desktop w-5 mr-2 text-center"></i>
                             <span class="font-medium group-hover:translate-x-1 transition-transform">Lab Resource</span>
                         </a>

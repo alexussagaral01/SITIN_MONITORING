@@ -152,7 +152,7 @@ if ($userId) {
                         x-transition:leave-end="opacity-0 transform -translate-y-2"
                         class="pl-7 mt-2 space-y-1">
                         
-                        <a href="lab_resource.php" class="group px-3 py-2 text-white/90 hover:bg-white/10 rounded-lg transition-all duration-200 flex items-center">
+                        <a href="lab_resources.php" class="group px-3 py-2 text-white/90 hover:bg-white/10 rounded-lg transition-all duration-200 flex items-center">
                             <i class="fas fa-desktop w-5 mr-2 text-center"></i>
                             <span class="font-medium group-hover:translate-x-1 transition-transform">Lab Resource</span>
                         </a>

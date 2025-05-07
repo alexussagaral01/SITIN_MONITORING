@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 24, 2025 at 05:32 PM
+-- Generation Time: May 07, 2025 at 03:31 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -74,14 +74,6 @@ CREATE TABLE `computer` (
 -- Dumping data for table `computer`
 --
 
-INSERT INTO `computer` (`ID`, `LABORATORY`, `PC_NUM`, `STATUS`) VALUES
-(9, 'lab524', 1, 'available'),
-(10, 'lab524', 2, 'available'),
-(11, 'lab526', 1, 'available'),
-(12, 'lab526', 2, 'available'),
-(13, 'lab517', 1, 'available'),
-(14, 'lab530', 13, 'available'),
-(15, 'lab524', 1, 'used');
 
 -- --------------------------------------------------------
 
@@ -105,8 +97,6 @@ CREATE TABLE `curr_sitin` (
 -- Dumping data for table `curr_sitin`
 --
 
-INSERT INTO `curr_sitin` (`SITIN_ID`, `IDNO`, `FULL_NAME`, `PURPOSE`, `LABORATORY`, `TIME_IN`, `TIME_OUT`, `DATE`, `STATUS`) VALUES
-(3, 22680649, 'Alexus Sundae Sagaral', 'System Integration & Architecture', 'Lab 528', '17:44:43', '17:45:10', '2025-04-24', 'Completed');
 
 -- --------------------------------------------------------
 
@@ -117,10 +107,43 @@ INSERT INTO `curr_sitin` (`SITIN_ID`, `IDNO`, `FULL_NAME`, `PURPOSE`, `LABORATOR
 CREATE TABLE `feedback` (
   `FEEDBACK_ID` int(11) NOT NULL,
   `IDNO` int(11) NOT NULL,
-  `LABORATORY` enum('Lab 524','Lab 526','Lab 528','Lab 530','Lab 542','Lab 544') NOT NULL,
+  `LABORATORY` enum('Lab 517','Lab 524','Lab 526','Lab 528','Lab 530','Lab 542','Lab 544') NOT NULL,
   `DATE` date NOT NULL,
   `FEEDBACK` varchar(255) NOT NULL,
   `RATING` int(11) NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `lab_schedule`
+--
+
+CREATE TABLE `lab_schedule` (
+  `SCHED_ID` int(11) NOT NULL,
+  `DAY` enum('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday') NOT NULL,
+  `LABORATORY` enum('Lab 517','Lab 524','Lab 526','Lab 528','Lab 530','Lab 542','Lab 544') NOT NULL,
+  `TIME_START` time NOT NULL,
+  `TIME_END` time NOT NULL,
+  `SUBJECT` varchar(255) NOT NULL,
+  `PROFESSOR` varchar(50) NOT NULL,
+  `CREATED_AT` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `notification`
+--
+
+CREATE TABLE `notification` (
+  `NOTIF_ID` int(11) NOT NULL,
+  `USER_ID` int(11) DEFAULT NULL,
+  `RESERVATION_ID` int(11) DEFAULT NULL,
+  `ANNOUNCEMENT_ID` int(11) DEFAULT NULL,
+  `MESSAGE` text DEFAULT NULL,
+  `IS_READ` tinyint(1) NOT NULL DEFAULT 0,
+  `CREATED_AT` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -147,12 +170,6 @@ CREATE TABLE `reservation` (
 --
 -- Dumping data for table `reservation`
 --
-
-INSERT INTO `reservation` (`ID`, `IDNO`, `FULL_NAME`, `COURSE`, `YEAR_LEVEL`, `PURPOSE`, `LABORATORY`, `PC_NUM`, `DATE`, `TIME_IN`, `TIME_OUT`, `STATUS`) VALUES
-(1, 22680649, 'Alexus Sundae Sagaral', 'BS IN INFORMATION TECHNOLOGY', '3rd Year', 'C++ Programming', '524', 1, '2025-04-24', '18:59:00', '00:00:00', 'Approved'),
-(2, 22680649, 'Alexus Sundae Sagaral', 'BS IN INFORMATION TECHNOLOGY', '3rd Year', 'C# Programming', '542', 10, '2025-04-24', '19:00:00', '00:00:00', 'Disapprove'),
-(3, 22680649, 'Alexus Sundae Sagaral', 'BS IN INFORMATION TECHNOLOGY', '3rd Year', 'C# Programming', '524', 1, '2025-04-24', '22:25:00', '00:00:00', 'Approved');
-
 -- --------------------------------------------------------
 
 --
@@ -175,8 +192,21 @@ CREATE TABLE `reservation_logs` (
 -- Dumping data for table `reservation_logs`
 --
 
-INSERT INTO `reservation_logs` (`LOG_ID`, `IDNO`, `FULL_NAME`, `LABORATORY`, `PC_NUM`, `DATE`, `TIME_IN`, `STATUS`, `ACTION_DATE`) VALUES
-(3, 22680649, 'Alexus Sundae Sagaral', '524', 1, '2025-04-24', '22:25:00', 'Approved', '2025-04-24 15:25:34');
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `resources`
+--
+
+CREATE TABLE `resources` (
+  `RESOURCES_ID` int(11) NOT NULL,
+  `RESOURCES_NAME` varchar(255) NOT NULL,
+  `PROFESSOR` varchar(100) DEFAULT NULL,
+  `DESCRIPTION` text DEFAULT NULL,
+  `RESOURCES_IMAGE` longblob DEFAULT NULL,
+  `RESOURCES_LINK` varchar(255) DEFAULT NULL,
+  `CREATED_AT` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -198,17 +228,13 @@ CREATE TABLE `users` (
   `EMAIL` varchar(30) NOT NULL,
   `ADDRESS` varchar(255) NOT NULL,
   `SESSION` int(11) NOT NULL DEFAULT 30,
-  `POINTS` int(5) NOT NULL
+  `POINTS` int(5) NOT NULL,
+  `TOTAL_POINTS` int(11) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `users`
 --
-
-INSERT INTO `users` (`STUD_NUM`, `IDNO`, `LAST_NAME`, `FIRST_NAME`, `MID_NAME`, `COURSE`, `YEAR_LEVEL`, `USER_NAME`, `PASSWORD_HASH`, `UPLOAD_IMAGE`, `EMAIL`, `ADDRESS`, `SESSION`, `POINTS`) VALUES
-(1, 22680649, 'Sagaral', 'Alexus Sundae', 'Jamilo', 'BS IN INFORMATION TECHNOLOGY', '3rd Year', 'alexus123', '$2y$10$cJ/qQrJwN7BGzUHccJB5ruyKKxIWhgXJNkJloRfaQimPbKkxWRl8S', 0x363830313031323737373065335f363764643861353763303132365f6d656f772e6a7067, 'alexussagaral3@gmail.com', 'Cebu City', 29, 0),
-(2, 57363743, 'Cabunilas', 'Vince Bryant', 'N', 'BS IN INFORMATION TECHNOLOGY', '3rd Year', 'vince', '$2y$10$5Kf9rjOMYBUvkprRuQtJheVxnQOmrEW3ifWQ8Ua8oRU5HD6Sr/wG.', 0x696d6167652e6a7067, '', '', 30, 0);
-
 --
 -- Indexes for dumped tables
 --
@@ -244,6 +270,21 @@ ALTER TABLE `feedback`
   ADD PRIMARY KEY (`FEEDBACK_ID`);
 
 --
+-- Indexes for table `lab_schedule`
+--
+ALTER TABLE `lab_schedule`
+  ADD PRIMARY KEY (`SCHED_ID`);
+
+--
+-- Indexes for table `notification`
+--
+ALTER TABLE `notification`
+  ADD PRIMARY KEY (`NOTIF_ID`),
+  ADD KEY `USER_ID` (`USER_ID`),
+  ADD KEY `RESERVATION_ID` (`RESERVATION_ID`),
+  ADD KEY `ANNOUNCEMENT_ID` (`ANNOUNCEMENT_ID`);
+
+--
 -- Indexes for table `reservation`
 --
 ALTER TABLE `reservation`
@@ -254,6 +295,12 @@ ALTER TABLE `reservation`
 --
 ALTER TABLE `reservation_logs`
   ADD PRIMARY KEY (`LOG_ID`);
+
+--
+-- Indexes for table `resources`
+--
+ALTER TABLE `resources`
+  ADD PRIMARY KEY (`RESOURCES_ID`);
 
 --
 -- Indexes for table `users`
@@ -275,19 +322,19 @@ ALTER TABLE `admin`
 -- AUTO_INCREMENT for table `announcement`
 --
 ALTER TABLE `announcement`
-  MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `computer`
 --
 ALTER TABLE `computer`
-  MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `curr_sitin`
 --
 ALTER TABLE `curr_sitin`
-  MODIFY `SITIN_ID` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `SITIN_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `feedback`
@@ -296,22 +343,87 @@ ALTER TABLE `feedback`
   MODIFY `FEEDBACK_ID` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `lab_schedule`
+--
+ALTER TABLE `lab_schedule`
+  MODIFY `SCHED_ID` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `notification`
+--
+ALTER TABLE `notification`
+  MODIFY `NOTIF_ID` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `reservation`
 --
 ALTER TABLE `reservation`
-  MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `reservation_logs`
 --
 ALTER TABLE `reservation_logs`
-  MODIFY `LOG_ID` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `LOG_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+
+--
+-- AUTO_INCREMENT for table `resources`
+--
+ALTER TABLE `resources`
+  MODIFY `RESOURCES_ID` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `STUD_NUM` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `STUD_NUM` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `notification`
+--
+ALTER TABLE `notification`
+  ADD CONSTRAINT `notification_ibfk_1` FOREIGN KEY (`USER_ID`) REFERENCES `users` (`STUD_NUM`) ON DELETE CASCADE,
+  ADD CONSTRAINT `notification_ibfk_2` FOREIGN KEY (`RESERVATION_ID`) REFERENCES `reservation` (`ID`) ON DELETE CASCADE,
+  ADD CONSTRAINT `notification_ibfk_3` FOREIGN KEY (`ANNOUNCEMENT_ID`) REFERENCES `announcement` (`ID`) ON DELETE CASCADE;
+-- Add the following triggers and sample data after the existing code
+
+-- Trigger to create a notification when a reservation is made
+DELIMITER //
+CREATE TRIGGER after_reservation_insert
+AFTER INSERT ON reservation
+FOR EACH ROW
+BEGIN
+    INSERT INTO notification (USER_ID, RESERVATION_ID, MESSAGE, IS_READ, CREATED_AT)
+    VALUES ((SELECT STUD_NUM FROM users WHERE IDNO = NEW.IDNO), NEW.ID, 
+            CONCAT('New reservation from ', NEW.FULL_NAME, ' for ', NEW.LABORATORY, ' on ', NEW.DATE), 
+            0, NOW());
+END //
+DELIMITER ;
+
+
+-- Trigger to create a notification when a reservation status changes
+DELIMITER //
+CREATE TRIGGER after_reservation_update
+AFTER UPDATE ON reservation
+FOR EACH ROW
+BEGIN
+    IF NEW.STATUS != OLD.STATUS THEN
+        INSERT INTO notification (USER_ID, RESERVATION_ID, MESSAGE, IS_READ, CREATED_AT)
+        VALUES ((SELECT STUD_NUM FROM users WHERE IDNO = NEW.IDNO), NEW.ID, 
+                CONCAT('Your reservation for ', NEW.LABORATORY, ' has been ', LOWER(NEW.STATUS)), 
+                0, NOW());
+    END IF;
+END //
+DELIMITER ;
+
+-- Add admin record
+INSERT INTO `admin` (`ADMIN_ID`, `USER_NAME`, `PASSWORD_HASH`) VALUES
+(1, 'admin', '$2y$10$cJ/qQrJwN7BGzUHccJB5ruyKKxIWhgXJNkJloRfaQimPbKkxWRl8S');
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

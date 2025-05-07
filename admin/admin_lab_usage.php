@@ -15,7 +15,15 @@ $offset = ($current_page - 1) * $entries_per_page;
 // Initialize search query
 $search = isset($_POST['search']) ? mysqli_real_escape_string($conn, $_POST['search']) : '';
 
-// Get total records (modify this according to your table)
+// Update points and sessions if points reach 3 or more
+$update_query = "UPDATE users 
+                SET SESSION = SESSION + FLOOR(POINTS / 3),
+                    TOTAL_POINTS = TOTAL_POINTS + POINTS,
+                    POINTS = POINTS % 3 
+                WHERE POINTS >= 3";
+mysqli_query($conn, $update_query);
+
+// Get total records
 $count_query = "SELECT COUNT(*) as total FROM users";
 if (!empty($search)) {
     $count_query .= " WHERE IDNO LIKE '%$search%' 
@@ -26,25 +34,8 @@ $count_result = mysqli_query($conn, $count_query);
 $count_row = mysqli_fetch_assoc($count_result);
 $total_records = $count_row['total'];
 
-// Modify query to show student information, points, and update sessions/points
-$query = "SELECT 
-            users.*,
-            CASE 
-                WHEN POINTS >= 3 THEN 0
-                ELSE POINTS 
-            END as points,
-            CASE 
-                WHEN POINTS >= 3 THEN SESSION + 1
-                ELSE SESSION 
-            END as sessions
-          FROM users";
-
-// Update points and sessions if points reach 3
-$update_query = "UPDATE users 
-                SET SESSION = SESSION + 1,
-                    POINTS = 0 
-                WHERE POINTS >= 3";
-mysqli_query($conn, $update_query);
+// Get student information query
+$query = "SELECT * FROM users";
 
 if (!empty($search)) {
     $query .= " WHERE users.IDNO LIKE '%$search%' 
@@ -265,7 +256,8 @@ if (!$result) {
                                 <th class="px-6 py-3 text-left">Course</th>
                                 <th class="px-6 py-3 text-left">Year Level</th>
                                 <th class="px-6 py-3 text-center">Points</th>
-                                <th class="px-6 py-3 text-center">Session</th>
+                                <th class="px-6 py-3 text-center">Credit Sessions</th>
+                                <th class="px-6 py-3 text-center">Total Points</th>
                             </tr>
                         </thead>
                         <tbody id="tableBody" class="bg-white">
@@ -273,17 +265,25 @@ if (!$result) {
                             if (mysqli_num_rows($result) > 0) {
                                 while ($row = mysqli_fetch_assoc($result)) {
                                     $fullName = $row['LAST_NAME'] . ', ' . $row['FIRST_NAME'] . ' ' . $row['MID_NAME'];
+                                    
+                                    // Get the actual sit-in count for this student
+                                    $sitin_query = "SELECT COUNT(*) as sit_in_count FROM curr_sitin WHERE IDNO = " . $row['IDNO'];
+                                    $sitin_result = mysqli_query($conn, $sitin_query);
+                                    $sitin_row = mysqli_fetch_assoc($sitin_result);
+                                    $sit_in_count = $sitin_row ? $sitin_row['sit_in_count'] : 0;
+                                    
                                     echo "<tr class='hover:bg-gray-100'>";
                                     echo "<td class='px-6 py-4'>" . $row['IDNO'] . "</td>";
                                     echo "<td class='px-6 py-4'>" . $fullName . "</td>";
                                     echo "<td class='px-6 py-4'>" . $row['COURSE'] . "</td>";
                                     echo "<td class='px-6 py-4'>" . $row['YEAR_LEVEL'] . "</td>";
-                                    echo "<td class='px-6 py-4 text-center'>" . $row['points'] . "</td>";
-                                    echo "<td class='px-6 py-4 text-center'>" . $row['sessions'] . "</td>";
+                                    echo "<td class='px-6 py-4 text-center'>" . $row['POINTS'] . "</td>";
+                                    echo "<td class='px-6 py-4 text-center'>" . $row['SESSION'] . "</td>";
+                                    echo "<td class='px-6 py-4 text-center'>" . $row['TOTAL_POINTS'] . "</td>";
                                     echo "</tr>";
                                 }
                             } else {
-                                echo "<tr><td colspan='6' class='px-6 py-4 text-center text-gray-500 italic'>No data available</td></tr>";
+                                echo "<tr><td colspan='7' class='px-6 py-4 text-center text-gray-500 italic'>No data available</td></tr>";
                             }
                             ?>
                         </tbody>

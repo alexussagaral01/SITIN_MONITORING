@@ -43,6 +43,7 @@ while ($row = $result->fetch_assoc()) {
     <link rel="icon" href="../logo/ccs.png" type="image/x-icon">
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <title>Dashboard</title>
     <script>
         tailwind.config = {
@@ -95,6 +96,17 @@ while ($row = $result->fetch_assoc()) {
             border-left: 3px solid;
             border-image: linear-gradient(to bottom, rgba(74,105,187,1), rgba(205,77,204,1)) 1;
         }
+        
+        /* Toast notification styles */
+        .colored-toast.swal2-icon-success {
+            background-color: #10B981 !important;
+        }
+        .colored-toast.swal2-icon-error {
+            background-color: #EF4444 !important;
+        }
+        .colored-toast {
+            color: #fff !important;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-indigo-900 via-purple-800 to-pink-700 min-h-screen font-poppins">
@@ -105,6 +117,72 @@ while ($row = $result->fetch_assoc()) {
             <div class="bar1 w-8 h-1 bg-white my-1 transition-all duration-300"></div>
             <div class="bar2 w-8 h-1 bg-white my-1 transition-all duration-300"></div>
             <div class="bar3 w-8 h-1 bg-white my-1 transition-all duration-300"></div>
+        </div>
+        
+        <!-- Notification Bell - Modified to initialize with fetchNotifications() -->
+        <div class="absolute top-4 right-6" x-data="notificationData" x-init="fetchNotifications()">
+            <div class="relative">
+                <button @click="open = !open" class="text-white hover:text-pink-200 transition-colors">
+                    <i class="fas fa-bell text-xl"></i>
+                    <span x-show="unreadCount > 0" x-text="unreadCount" 
+                          class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    </span>
+                </button>
+                
+                <!-- Dropdown Panel -->
+                <div x-show="open" 
+                     @click.outside="open = false"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 transform scale-95"
+                     x-transition:enter-end="opacity-100 transform scale-100"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100 transform scale-100"
+                     x-transition:leave-end="opacity-0 transform scale-95"
+                     class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl overflow-hidden z-50">
+                    
+                    <div class="p-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium flex justify-between items-center">
+                        <span>Notifications</span>
+                        <button @click="markAllAsRead()" x-show="unreadCount > 0" class="text-xs bg-white/20 hover:bg-white/30 rounded px-2 py-1">
+                            Mark all as read
+                        </button>
+                    </div>
+                    
+                    <div class="max-h-[350px] overflow-y-auto">
+                        <template x-if="notifications.length === 0">
+                            <div class="flex flex-col items-center justify-center py-8 px-4 text-gray-500">
+                                <i class="far fa-bell-slash text-3xl mb-2"></i>
+                                <p class="text-center">No notifications yet</p>
+                            </div>
+                        </template>
+                        
+                        <template x-for="notification in notifications" :key="notification.NOTIF_ID">
+                            <div @click="readNotification(notification.NOTIF_ID, notification)" 
+                                 :class="{'bg-indigo-50': !notification.IS_READ}" 
+                                 class="p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0 mr-3">
+                                        <i :class="getNotificationIcon(notification)" class="text-lg mt-1"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm font-medium text-gray-900" x-text="getNotificationType(notification)"></p>
+                                        <p class="text-xs text-gray-500 mt-1" x-text="notification.MESSAGE"></p>
+                                        <div class="flex justify-between items-center mt-2">
+                                            <span class="text-xs text-gray-400" x-text="formatDate(notification.CREATED_AT)"></span>
+                                            <span x-show="!notification.IS_READ" class="h-2 w-2 bg-blue-500 rounded-full"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    
+                    <div class="p-2 bg-gray-50 text-center">
+                        <a href="user_notifications.php" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+                            View all notifications
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -163,7 +241,7 @@ while ($row = $result->fetch_assoc()) {
                         x-transition:leave-end="opacity-0 transform -translate-y-2"
                         class="pl-7 mt-2 space-y-1">
                         
-                        <a href="lab_resource.php" class="group px-3 py-2 text-white/90 hover:bg-white/20 rounded-lg transition-all duration-200 flex items-center">
+                        <a href="lab_resources.php" class="group px-3 py-2 text-white/90 hover:bg-white/20 rounded-lg transition-all duration-200 flex items-center">
                             <i class="fas fa-desktop w-5 mr-2 text-center"></i>
                             <span class="font-medium">Lab Resource</span>
                         </a>
@@ -191,7 +269,7 @@ while ($row = $result->fetch_assoc()) {
     <!-- Main Content Container -->
     <div class="flex-grow">
         <!-- Announcements Section -->
-        <div class="w-11/12 md:w-4/12 mx-4 my-8 bg-white rounded-lg shadow-lg overflow-hidden float-left border border-gray-200">
+        <div class="w-11/12 md:w-4/12 mx-4 my-8 bg-white rounded-lg shadow-lg overflow-hidden float-left border border-gray-200 announcements-section">
             <div class="text-white p-4 flex items-center justify-center relative overflow-hidden" style="background: linear-gradient(to bottom right, rgb(49, 46, 129), rgb(107, 33, 168), rgb(190, 24, 93))">
                 <div class="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
                 <div class="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
@@ -345,6 +423,166 @@ while ($row = $result->fetch_assoc()) {
                     item.style.opacity = '1';
                     item.style.transform = 'translateY(0)';
                 }, index * 150);
+            });
+        });
+        
+        // Notifications functions
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('notificationData', () => ({
+                open: false,
+                notifications: [],
+                unreadCount: 0,
+                
+                fetchNotifications() {
+                    fetch('../fetch_user_notifications.php')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.notifications = data.notifications;
+                            this.unreadCount = data.unread_count;
+                        })
+                        .catch(error => console.error('Error fetching notifications:', error));
+                },
+                
+                readNotification(id, notification) {
+                    fetch('../mark_notification_read.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `notification_id=${id}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Update local notification data
+                            this.notifications = this.notifications.map(notif => {
+                                if (notif.NOTIF_ID === id) {
+                                    return { ...notif, IS_READ: 1 };
+                                }
+                                return notif;
+                            });
+                            this.unreadCount = Math.max(0, this.unreadCount - 1);
+                            
+                            // Handle redirect based on notification type
+                            if (notification.RESERVATION_ID) {
+                                window.location.href = 'reservation.php';
+                            } else if (notification.ANNOUNCEMENT_ID) {
+                                // For announcement notifications, just scroll to the announcements section
+                                const announcementsSection = document.querySelector('.announcements-section');
+                                if (announcementsSection) {
+                                    announcementsSection.scrollIntoView({ behavior: 'smooth' });
+                                } else {
+                                    // If no specific section, just reload to show fresh announcements
+                                    window.location.reload();
+                                }
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Error marking notification as read:', error));
+                },
+                
+                markAllAsRead() {
+                    fetch('../mark_all_user_notifications_read.php', {
+                        method: 'POST'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Update all notifications to read
+                            this.notifications = this.notifications.map(notif => {
+                                return { ...notif, IS_READ: 1 };
+                            });
+                            this.unreadCount = 0;
+                            
+                            const Toast = Swal.mixin({
+                                toast: true,
+                                position: 'top-right',
+                                iconColor: 'white',
+                                customClass: {
+                                    popup: 'colored-toast'
+                                },
+                                showConfirmButton: false,
+                                timer: 1500,
+                                timerProgressBar: true
+                            });
+                            Toast.fire({
+                                icon: 'success',
+                                title: 'All notifications marked as read',
+                                background: '#10B981'
+                            });
+                        }
+                    })
+                    .catch(error => console.error('Error marking all notifications as read:', error));
+                },
+                
+                getNotificationType(notification) {
+                    if (notification.RESERVATION_ID) {
+                        if (notification.MESSAGE && notification.MESSAGE.includes('approved')) {
+                            return 'Reservation Approved';
+                        } else if (notification.MESSAGE && notification.MESSAGE.includes('rejected')) {
+                            return 'Reservation Rejected';
+                        } else {
+                            return 'Reservation Update';
+                        }
+                    } else if (notification.ANNOUNCEMENT_ID) {
+                        return 'New Announcement';
+                    } else {
+                        return 'Notification';
+                    }
+                },
+                
+                getNotificationIcon(notification) {
+                    if (notification.RESERVATION_ID) {
+                        return 'fas fa-calendar-check text-blue-500';
+                    } else if (notification.ANNOUNCEMENT_ID) {
+                        return 'fas fa-bullhorn text-yellow-500';
+                    } else {
+                        return 'fas fa-bell text-gray-500';
+                    }
+                },
+                
+                formatDate(dateString) {
+                    const date = new Date(dateString);
+                    const now = new Date();
+                    const diffTime = Math.abs(now - date);
+                    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays === 0) {
+                        // Today - show time only
+                        return 'Today at ' + date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                    } else if (diffDays === 1) {
+                        return 'Yesterday';
+                    } else if (diffDays < 7) {
+                        return diffDays + ' days ago';
+                    } else {
+                        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    }
+                }
+            }));
+        });
+
+        // Add this to initialize notifications when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get the Alpine.js component instance
+            const notificationComponent = document.querySelector('[x-data="notificationData"]').__x.$data;
+            // Fetch notifications initially
+            notificationComponent.fetchNotifications();
+            
+            // Set up a poll to check for new notifications every 30 seconds
+            setInterval(() => {
+            notificationComponent.fetchNotifications();
+            }, 30000);
+            
+            // Format dates if needed and apply animations
+            const announcementItems = document.querySelectorAll('.announcement-fade-in');
+            
+            // Stagger animation effect
+            announcementItems.forEach((item, index) => {
+            item.style.opacity = '0';
+            setTimeout(() => {
+                item.style.opacity = '1';
+                item.style.transform = 'translateY(0)';
+            }, index * 150);
             });
         });
     </script>

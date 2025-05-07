@@ -16,6 +16,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['new_announcement'])) 
     $stmt->bind_param("ss", $content, $createdBy);
     
     if ($stmt->execute()) {
+        // Get the ID of the newly inserted announcement
+        $announcementId = $conn->insert_id;
+        
+        // Create notifications for all users
+        $notifyAllUsers = $conn->prepare("INSERT INTO notification (USER_ID, ANNOUNCEMENT_ID, MESSAGE, IS_READ, CREATED_AT) 
+                                          SELECT STUD_NUM, ?, 'Admin posted a new announcement', 0, NOW() 
+                                          FROM users");
+        $notifyAllUsers->bind_param("i", $announcementId);
+        $notifyAllUsers->execute();
+        $notifyAllUsers->close();
+        
         $_SESSION['toast'] = [
             'status' => 'success',
             'message' => 'Announcement posted successfully!'
@@ -116,7 +127,7 @@ $yearLevelLabelsJSON = json_encode(array_keys($yearLevelCounts)); // Fixed from 
 // Initialize leaderboard array
 $leaderboardData = [];
 
-// Update the leaderboard query to handle point limits
+// Update the leaderboard query to count actual sit-in sessions
 $leaderboardQuery = "
     SELECT 
         u.FIRST_NAME,
@@ -124,16 +135,11 @@ $leaderboardQuery = "
         u.YEAR_LEVEL,
         u.UPLOAD_IMAGE,
         COUNT(c.SITIN_ID) as total_sessions,
-        CASE 
-            WHEN (COUNT(c.SITIN_ID) * 10 + 
-                 SUM(TIMESTAMPDIFF(HOUR, c.TIME_IN, COALESCE(c.TIME_OUT, NOW()))) * 5) > 3 THEN 0
-            ELSE (COUNT(c.SITIN_ID) * 10 + 
-                 SUM(TIMESTAMPDIFF(HOUR, c.TIME_IN, COALESCE(c.TIME_OUT, NOW()))) * 5)
-        END as total_points
+        u.TOTAL_POINTS as total_points 
     FROM users u
     LEFT JOIN curr_sitin c ON u.IDNO = c.IDNO
-    GROUP BY u.IDNO, u.FIRST_NAME, u.LAST_NAME, u.YEAR_LEVEL, u.UPLOAD_IMAGE
-    ORDER BY total_points DESC, total_sessions DESC
+    GROUP BY u.IDNO, u.FIRST_NAME, u.LAST_NAME, u.YEAR_LEVEL, u.UPLOAD_IMAGE, u.TOTAL_POINTS
+    ORDER BY u.TOTAL_POINTS DESC, total_sessions DESC
     LIMIT 5
 ";
 
@@ -225,6 +231,72 @@ if (isset($_SESSION['toast'])) {
             <div class="bar1 w-8 h-1 bg-white my-1 transition-all duration-300"></div>
             <div class="bar2 w-8 h-1 bg-white my-1 transition-all duration-300"></div>
             <div class="bar3 w-8 h-1 bg-white my-1 transition-all duration-300"></div>
+        </div>
+        
+        <!-- Notification Bell - Modified to initialize with fetchNotifications() -->
+        <div class="absolute top-4 right-6" x-data="notificationData" x-init="fetchNotifications()">
+            <div class="relative">
+                <button @click="open = !open" class="text-white hover:text-pink-200 transition-colors">
+                    <i class="fas fa-bell text-xl"></i>
+                    <span x-show="unreadCount > 0" x-text="unreadCount" 
+                          class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    </span>
+                </button>
+                
+                <!-- Dropdown Panel -->
+                <div x-show="open" 
+                     @click.outside="open = false"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 transform scale-95"
+                     x-transition:enter-end="opacity-100 transform scale-100"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100 transform scale-100"
+                     x-transition:leave-end="opacity-0 transform scale-95"
+                     class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl overflow-hidden z-50">
+                    
+                    <div class="p-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium flex justify-between items-center">
+                        <span>Notifications</span>
+                        <button @click="markAllAsRead()" x-show="unreadCount > 0" class="text-xs bg-white/20 hover:bg-white/30 rounded px-2 py-1">
+                            Mark all as read
+                        </button>
+                    </div>
+                    
+                    <div class="max-h-[350px] overflow-y-auto">
+                        <template x-if="notifications.length === 0">
+                            <div class="flex flex-col items-center justify-center py-8 px-4 text-gray-500">
+                                <i class="far fa-bell-slash text-3xl mb-2"></i>
+                                <p class="text-center">No notifications yet</p>
+                            </div>
+                        </template>
+                        
+                        <template x-for="notification in notifications" :key="notification.NOTIF_ID">
+                            <div @click="readNotification(notification.NOTIF_ID, notification)" 
+                                 :class="{'bg-indigo-50': !notification.IS_READ}" 
+                                 class="p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0 mr-3">
+                                        <i :class="getNotificationIcon(notification)" class="text-lg mt-1"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm font-medium text-gray-900" x-text="getNotificationType(notification)"></p>
+                                        <p class="text-xs text-gray-500 mt-1" x-text="notification.MESSAGE"></p>
+                                        <div class="flex justify-between items-center mt-2">
+                                            <span class="text-xs text-gray-400" x-text="formatDate(notification.CREATED_AT)"></span>
+                                            <span x-show="!notification.IS_READ" class="h-2 w-2 bg-blue-500 rounded-full"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    
+                    <div class="p-2 bg-gray-50 text-center">
+                        <a href="admin_notifications.php" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+                            View all notifications
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -424,32 +496,27 @@ if (isset($_SESSION['toast'])) {
                                         <!-- Total Points -->
                                         <div class="font-bold text-lg text-indigo-600">
                                             <?php 
-                                            $points = $student['total_points'];
-                                            if ($points > 3) {
-                                                echo '0 pts';
-                                                echo '<span class="text-xs text-red-500 block">(Points Reset)</span>';
-                                            } else {
-                                                echo number_format($points) . ' pts';
-                                            }
+                                                echo number_format($student['total_points']) . ' pts';
                                             ?>
                                         </div>
                                         
-                                        <!-- Sessions -->
+                                        <!-- Sessions - Now showing actual sit-in count -->
                                         <div class="font-medium text-purple-600">
                                             <i class="fas fa-calendar-check mr-1"></i>
-                                            <?php echo $student['total_sessions']; ?> sessions
+                                            <?php echo $student['total_sessions']; ?> sit-ins
                                         </div>
                                         
                                         <!-- Rank Badge -->
                                         <div class="text-amber-500 font-medium text-xs">
                                             <?php 
-                                            if ($points > 3) {
-                                                echo '🔄 Points Reset';
-                                            } elseif ($points == 3) {
-                                                echo '⭐ Maximum Points';
-                                            } elseif ($points == 2) {
-                                                echo '✨ Advanced';
-                                            } elseif ($points == 1) {
+                                            $totalPoints = $student['total_points'];
+                                            if ($totalPoints >= 100) {
+                                                echo '⭐⭐⭐ Expert';
+                                            } elseif ($totalPoints >= 5) {
+                                                echo '⭐⭐ Intermediate';
+                                            } elseif ($totalPoints >= 3) {
+                                                echo '⭐ Advanced';
+                                            } elseif ($totalPoints >= 1) {
                                                 echo '📚 Active';
                                             } else {
                                                 echo '🌱 New';
@@ -492,7 +559,7 @@ if (isset($_SESSION['toast'])) {
                         <div class="flex flex-col items-center text-center">
                             <div class="mb-2 bg-purple-500/10 p-2 rounded-full">
                                 <i class="fas fa-chair text-xl text-purple-600"></i>
-                            </div>
+                            </div>  
                             <span class="text-3xl font-bold text-purple-600 mb-1"><?php echo $currentSitIns; ?></span>
                             <span class="text-xs text-purple-600/70 font-medium uppercase tracking-wider">Currently Sit-In</span>
                         </div>
@@ -631,6 +698,132 @@ if (isset($_SESSION['toast'])) {
             document.getElementById("mySidenav").classList.remove("-translate-x-0");
             document.getElementById("mySidenav").classList.add("-translate-x-full");
         }
+        
+        // Notifications functions
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('notificationData', () => ({
+                open: false,
+                notifications: [],
+                unreadCount: 0,
+                
+                fetchNotifications() {
+                    fetch('fetch_notifications.php')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.notifications = data.notifications;
+                            this.unreadCount = data.unread_count;
+                        })
+                        .catch(error => console.error('Error fetching notifications:', error));
+                },
+                
+                readNotification(id, notification) {
+                    fetch('mark_notification_read.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `notification_id=${id}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Update local notification data
+                            this.notifications = this.notifications.map(notif => {
+                                if (notif.NOTIF_ID === id) {
+                                    return { ...notif, IS_READ: 1 };
+                                }
+                                return notif;
+                            });
+                            this.unreadCount = Math.max(0, this.unreadCount - 1);
+                            
+                            // Handle redirect based on notification type
+                            if (notification.RESERVATION_ID) {
+                                window.location.href = 'admin_reservation.php';
+                            } else if (notification.FEEDBACK_ID) {
+                                window.location.href = 'admin_feedback.php';
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Error marking notification as read:', error));
+                },
+                
+                markAllAsRead() {
+                    fetch('mark_all_notifications_read.php', {
+                        method: 'POST'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Update all notifications to read
+                            this.notifications = this.notifications.map(notif => {
+                                return { ...notif, IS_READ: 1 };
+                            });
+                            this.unreadCount = 0;
+                            
+                            const Toast = Swal.mixin({
+                                toast: true,
+                                position: 'top-right',
+                                iconColor: 'white',
+                                customClass: {
+                                    popup: 'colored-toast'
+                                },
+                                showConfirmButton: false,
+                                timer: 1500,
+                                timerProgressBar: true
+                            });
+                            Toast.fire({
+                                icon: 'success',
+                                title: 'All notifications marked as read',
+                                background: '#10B981'
+                            });
+                        }
+                    })
+                    .catch(error => console.error('Error marking all notifications as read:', error));
+                },
+                
+                getNotificationType(notification) {
+                    if (notification.RESERVATION_ID) {
+                        return 'Reservation Request';
+                    } else if (notification.FEEDBACK_ID) {
+                        return 'Feedback Received';
+                    } else if (notification.ANNOUNCEMENT_ID) {
+                        return 'Announcement';
+                    } else {
+                        return 'Notification';
+                    }
+                },
+                
+                getNotificationIcon(notification) {
+                    if (notification.RESERVATION_ID) {
+                        return 'fas fa-calendar-check text-blue-500';
+                    } else if (notification.FEEDBACK_ID) {
+                        return 'fas fa-comment-alt text-purple-500';
+                    } else if (notification.ANNOUNCEMENT_ID) {
+                        return 'fas fa-bullhorn text-yellow-500';
+                    } else {
+                        return 'fas fa-bell text-gray-500';
+                    }
+                },
+                
+                formatDate(dateString) {
+                    const date = new Date(dateString);
+                    const now = new Date();
+                    const diffTime = Math.abs(now - date);
+                    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays === 0) {
+                        // Today - show time only
+                        return 'Today at ' + date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                    } else if (diffDays === 1) {
+                        return 'Yesterday';
+                    } else if (diffDays < 7) {
+                        return diffDays + ' days ago';
+                    } else {
+                        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    }
+                }
+            }));
+        });
         
         // Add this function before the existing scripts
         function confirmDelete(id) {
@@ -871,6 +1064,16 @@ if (isset($_SESSION['toast'])) {
                 sitInChart.resize();
                 yearLevelChart.resize();
             });
+
+            // Set up polling for notifications every 30 seconds
+            setInterval(() => {
+                try {
+                    const notificationComponent = document.querySelector('[x-data="notificationData"]').__x.$data;
+                    notificationComponent.fetchNotifications();
+                } catch (error) {
+                    console.error('Error updating notifications:', error);
+                }
+            }, 30000);
         });
 
         function editAnnouncement(id, button) {

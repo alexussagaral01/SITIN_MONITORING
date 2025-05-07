@@ -105,6 +105,92 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// When approving a reservation:
+if (isset($_POST['approve'])) {
+    $id = $_POST['id'];
+    $stmt = $conn->prepare("UPDATE reservation SET STATUS = 'Approved' WHERE ID = ?");
+    $stmt->bind_param("i", $id);
+    
+    if ($stmt->execute()) {
+        // Get the student ID to create a notification
+        $getUserQuery = $conn->prepare("SELECT IDNO, FULL_NAME, STUD_NUM, LABORATORY, DATE FROM reservation r 
+                                        JOIN users u ON r.IDNO = u.IDNO WHERE r.ID = ?");
+        $getUserQuery->bind_param("i", $id);
+        $getUserQuery->execute();
+        $result = $getUserQuery->get_result();
+        
+        if ($row = $result->fetch_assoc()) {
+            // Create notification
+            $userId = $row['STUD_NUM'];
+            $message = "Your reservation for " . $row['LABORATORY'] . " on " . $row['DATE'] . " has been approved";
+            
+            $notifyUser = $conn->prepare("INSERT INTO notification (USER_ID, RESERVATION_ID, MESSAGE, IS_READ, CREATED_AT) 
+                                          VALUES (?, ?, ?, 0, NOW())");
+            $notifyUser->bind_param("iis", $userId, $id, $message);
+            $notifyUser->execute();
+            $notifyUser->close();
+        }
+        $getUserQuery->close();
+        
+        $_SESSION['toast'] = [
+            'status' => 'success',
+            'message' => 'Reservation approved successfully!'
+        ];
+    } else {
+        $_SESSION['toast'] = [
+            'status' => 'error',
+            'message' => 'Failed to approve reservation.'
+        ];
+    }
+    $stmt->close();
+    
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit();
+}
+
+// When rejecting a reservation:
+if (isset($_POST['reject'])) {
+    $id = $_POST['id'];
+    $stmt = $conn->prepare("UPDATE reservation SET STATUS = 'Rejected' WHERE ID = ?");
+    $stmt->bind_param("i", $id);
+    
+    if ($stmt->execute()) {
+        // Get the student ID to create a notification
+        $getUserQuery = $conn->prepare("SELECT IDNO, FULL_NAME, STUD_NUM, LABORATORY, DATE FROM reservation r 
+                                        JOIN users u ON r.IDNO = u.IDNO WHERE r.ID = ?");
+        $getUserQuery->bind_param("i", $id);
+        $getUserQuery->execute();
+        $result = $getUserQuery->get_result();
+        
+        if ($row = $result->fetch_assoc()) {
+            // Create notification
+            $userId = $row['STUD_NUM'];
+            $message = "Your reservation for " . $row['LABORATORY'] . " on " . $row['DATE'] . " has been rejected";
+            
+            $notifyUser = $conn->prepare("INSERT INTO notification (USER_ID, RESERVATION_ID, MESSAGE, IS_READ, CREATED_AT) 
+                                          VALUES (?, ?, ?, 0, NOW())");
+            $notifyUser->bind_param("iis", $userId, $id, $message);
+            $notifyUser->execute();
+            $notifyUser->close();
+        }
+        $getUserQuery->close();
+        
+        $_SESSION['toast'] = [
+            'status' => 'success',
+            'message' => 'Reservation rejected successfully!'
+        ];
+    } else {
+        $_SESSION['toast'] = [
+            'status' => 'error',
+            'message' => 'Failed to reject reservation.'
+        ];
+    }
+    $stmt->close();
+    
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit();
+}
+
 // Handle PC status updates
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pc_action'])) {
     $pcList = isset($_POST['pc_list']) ? json_decode($_POST['pc_list']) : [];
