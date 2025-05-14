@@ -13,7 +13,7 @@ $current_page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($current_page - 1) * $entries_per_page;
 
 // Update query to match database column names
-$query = "SELECT IDNO, FULL_NAME, PURPOSE, LABORATORY, TIME_IN, TIME_OUT, DATE, STATUS 
+$query = "SELECT IDNO, FULL_NAME, PURPOSE, LABORATORY, TIME_IN, TIME_OUT, DATE, STATUS, TYPE 
           FROM curr_sitin 
           ORDER BY DATE DESC 
           LIMIT ? OFFSET ?";
@@ -308,6 +308,7 @@ $labDataJSON = json_encode($labData);
                         <tr>
                             <th class="px-6 py-3 text-left">ID Number</th>
                             <th class="px-6 py-3 text-left">Name</th>
+                            <th class="px-6 py-3 text-left">Type</th>
                             <th class="px-6 py-3 text-left">Purpose</th>
                             <th class="px-6 py-3 text-left">Laboratory</th>
                             <th class="px-6 py-3 text-left">Time In</th>
@@ -323,6 +324,19 @@ $labDataJSON = json_encode($labData);
                                 echo "<tr class='hover:bg-gray-50'>";
                                 echo "<td class='px-6 py-4'>" . htmlspecialchars($row['IDNO']) . "</td>";
                                 echo "<td class='px-6 py-4'>" . htmlspecialchars($row['FULL_NAME']) . "</td>";
+                                echo "<td class='px-6 py-4'>";
+                                if ($row['TYPE'] === 'Direct') {
+                                    echo "<span class='inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800'>
+                                            <span class='w-1 h-1 mr-1.5 rounded-full bg-green-500'></span>
+                                            Direct
+                                          </span>";
+                                } else {
+                                    echo "<span class='inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800'>
+                                            <span class='w-1 h-1 mr-1.5 rounded-full bg-blue-500'></span>
+                                            Reserved
+                                          </span>";
+                                }
+                                echo "</td>";
                                 echo "<td class='px-6 py-4'>" . htmlspecialchars($row['PURPOSE']) . "</td>";
                                 echo "<td class='px-6 py-4'>" . htmlspecialchars($row['LABORATORY']) . "</td>";
                                 echo "<td class='px-6 py-4'>" . date('h:i A', strtotime($row['TIME_IN'])) . "</td>";
@@ -332,7 +346,7 @@ $labDataJSON = json_encode($labData);
                                 echo "</tr>";
                             }
                         } else {
-                            echo "<tr><td colspan='8' class='px-6 py-4 text-center text-gray-500 italic'>No data available</td></tr>";
+                            echo "<tr><td colspan='9' class='px-6 py-4 text-center text-gray-500 italic'>No data available</td></tr>";
                         }
                         ?>
                     </tbody>

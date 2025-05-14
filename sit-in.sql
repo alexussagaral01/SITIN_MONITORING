@@ -93,6 +93,11 @@ CREATE TABLE `curr_sitin` (
   `STATUS` varchar(10) NOT NULL DEFAULT 'Active'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- Add TYPE column to curr_sitin table
+ALTER TABLE curr_sitin
+ADD COLUMN TYPE varchar(10) NOT NULL DEFAULT 'Direct' 
+AFTER STATUS;
+
 --
 -- Dumping data for table `curr_sitin`
 --
@@ -167,6 +172,11 @@ CREATE TABLE `reservation` (
   `STATUS` varchar(10) NOT NULL DEFAULT 'Pending'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- Add TYPE column to reservation table
+ALTER TABLE reservation
+ADD COLUMN TYPE varchar(10) NOT NULL DEFAULT 'Reserved' 
+AFTER STATUS;
+
 --
 -- Dumping data for table `reservation`
 --
@@ -187,6 +197,11 @@ CREATE TABLE `reservation_logs` (
   `STATUS` varchar(20) NOT NULL,
   `ACTION_DATE` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Add TYPE column to reservation_logs table
+ALTER TABLE reservation_logs
+ADD COLUMN TYPE varchar(10) NOT NULL DEFAULT 'Reserved' 
+AFTER STATUS;
 
 --
 -- Dumping data for table `reservation_logs`

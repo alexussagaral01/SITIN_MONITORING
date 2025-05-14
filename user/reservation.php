@@ -61,8 +61,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validate and insert reservation
     if (!empty($purpose) && !empty($lab) && !empty($date) && !empty($timeIn) && !empty($pcNumber)) {
         // Insert into reservation table
-        $stmt = $conn->prepare("INSERT INTO reservation (IDNO, FULL_NAME, COURSE, YEAR_LEVEL, PURPOSE, LABORATORY, PC_NUM, DATE, TIME_IN) 
-                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt = $conn->prepare("INSERT INTO reservation (IDNO, FULL_NAME, COURSE, YEAR_LEVEL, PURPOSE, LABORATORY, PC_NUM, DATE, TIME_IN, TYPE) 
+                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Reserved')");
         
         $stmt->bind_param("issssssss", 
             $idNumber,
@@ -372,6 +372,17 @@ unset($_SESSION['errorMessage']);
                             
                             <!-- Hidden PC input (will be updated by the PC selection panel) -->
                             <input type="hidden" id="available_pc" name="available_pc" value="">
+                            
+                            <!-- Reservation Type -->
+                            <div class="flex items-center gap-4">
+                                <i class="fas fa-tag text-purple-500"></i>
+                                <div class="flex-1 p-3 border border-gray-300 rounded-lg bg-gray-50">
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        <span class="w-1 h-1 mr-1.5 rounded-full bg-blue-500"></span>
+                                        Reserved
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                         <!-- Submit Button -->
                         <div class="flex justify-center pt-4">

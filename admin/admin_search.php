@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['time_in'])) {
         ];
     } else {
         // Insert new sit-in record
-        $stmt = $conn->prepare("INSERT INTO curr_sitin (IDNO, FULL_NAME, PURPOSE, LABORATORY, TIME_IN, DATE, STATUS) VALUES (?, ?, ?, ?, NOW(), CURDATE(), 'Active')");
+        $stmt = $conn->prepare("INSERT INTO curr_sitin (IDNO, FULL_NAME, PURPOSE, LABORATORY, TIME_IN, DATE, STATUS, TYPE) VALUES (?, ?, ?, ?, NOW(), CURDATE(), 'Active', 'Direct')");
         $stmt->bind_param("isss", $idno, $fullName, $purpose, $laboratory);
         
         if ($stmt->execute()) {

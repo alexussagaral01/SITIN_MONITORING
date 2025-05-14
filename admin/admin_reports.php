@@ -29,8 +29,8 @@ $count_row = mysqli_fetch_assoc($count_result);
 $total_records = $count_row['total'];
 $total_pages = ceil($total_records / $entries_per_page);
 
-// Modify the base query to include pagination
-$query = "SELECT IDNO, FULL_NAME, PURPOSE, LABORATORY, TIME_IN, TIME_OUT, DATE FROM curr_sitin";
+// Modify the base query to include TYPE
+$query = "SELECT IDNO, FULL_NAME, PURPOSE, LABORATORY, TIME_IN, TIME_OUT, DATE, TYPE FROM curr_sitin";
 if (!empty($search)) {
     $query .= " WHERE IDNO LIKE '%$search%' 
                 OR FULL_NAME LIKE '%$search%' 
@@ -309,7 +309,7 @@ $result = $stmt->get_result();
                 $selected_laboratory = isset($_POST['selected_laboratory']) ? $_POST['selected_laboratory'] : '';
                 
                 // Build the query dynamically based on filters
-                $filter_query = "SELECT IDNO, FULL_NAME, PURPOSE, LABORATORY, TIME_IN, TIME_OUT, DATE FROM curr_sitin WHERE 1=1";
+                $filter_query = "SELECT IDNO, FULL_NAME, PURPOSE, LABORATORY, TIME_IN, TIME_OUT, DATE, TYPE FROM curr_sitin WHERE 1=1";
                 
                 $params = [];
                 $types = '';
@@ -378,10 +378,11 @@ $result = $stmt->get_result();
 
                 <div class="overflow-x-auto">
                     <table id="reportsTable" class="min-w-full">
-                    <thead style="background: linear-gradient(to bottom right, rgb(49, 46, 129), rgb(107, 33, 168), rgb(190, 24, 93));" class="text-white">
+                        <thead style="background: linear-gradient(to bottom right, rgb(49, 46, 129), rgb(107, 33, 168), rgb(190, 24, 93));" class="text-white">
                             <tr>
                                 <th class="px-6 py-3 text-left">ID Number</th>
                                 <th class="px-6 py-3 text-left">Name</th>
+                                <th class="px-6 py-3 text-left">Type</th>
                                 <th class="px-6 py-3 text-left">Purpose</th>
                                 <th class="px-6 py-3 text-left">Laboratory</th>
                                 <th class="px-6 py-3 text-left">Time In</th>
@@ -389,30 +390,37 @@ $result = $stmt->get_result();
                                 <th class="px-6 py-3 text-left">Date</th>
                             </tr>
                         </thead>
-                        <tbody class="bg-white">
-                            <?php
-                            if (mysqli_num_rows($result) > 0) {
-                                while ($row = mysqli_fetch_assoc($result)) {
-                                    // Convert time to Asia/Manila timezone and 12-hour format
-                                    $time_in = date('h:i A', strtotime($row['TIME_IN']));
-                                    $time_out = $row['TIME_OUT'] ? date('h:i A', strtotime($row['TIME_OUT'])) : 'Active';
-                                    
-                                    echo "<tr class='border-b hover:bg-gray-50'>";
-                                    echo "<td class='px-6 py-4'>" . $row['IDNO'] . "</td>";
-                                    echo "<td class='px-6 py-4'>" . $row['FULL_NAME'] . "</td>";
-                                    echo "<td class='px-6 py-4'>" . $row['PURPOSE'] . "</td>";
-                                    echo "<td class='px-6 py-4'>" . $row['LABORATORY'] . "</td>";
-                                    echo "<td class='px-6 py-4'>" . $time_in . "</td>";
-                                    echo "<td class='px-6 py-4'>" . $time_out . "</td>";
-                                    echo "<td class='px-6 py-4'>" . $row['DATE'] . "</td>";
-                                    echo "</tr>";
-                                }
-                            } else {
-                                echo "<tr class='border-b hover:bg-gray-50'>";
-                                echo "<td colspan='7' class='px-6 py-4 text-center text-gray-500 italic'>No data available</td>";
-                                echo "</tr>";
-                            }
-                            ?>
+                        <tbody>
+                            <?php if ($result && $result->num_rows > 0): ?>
+                                <?php while ($row = $result->fetch_assoc()): ?>
+                                    <tr>
+                                        <td class="px-6 py-4"><?php echo htmlspecialchars($row['IDNO']); ?></td>
+                                        <td class="px-6 py-4"><?php echo htmlspecialchars($row['FULL_NAME']); ?></td>
+                                        <td class="px-6 py-4">
+                                            <?php if ($row['TYPE'] === 'Direct'): ?>
+                                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                    <span class="w-1 h-1 mr-1.5 rounded-full bg-green-500"></span>
+                                                    Direct
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                    <span class="w-1 h-1 mr-1.5 rounded-full bg-blue-500"></span>
+                                                    Reserved
+                                                </span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="px-6 py-4"><?php echo htmlspecialchars($row['PURPOSE']); ?></td>
+                                        <td class="px-6 py-4"><?php echo htmlspecialchars($row['LABORATORY']); ?></td>
+                                        <td class="px-6 py-4"><?php echo date('h:i A', strtotime($row['TIME_IN'])); ?></td>
+                                        <td class="px-6 py-4"><?php echo $row['TIME_OUT'] ? date('h:i A', strtotime($row['TIME_OUT'])) : 'Active'; ?></td>
+                                        <td class="px-6 py-4"><?php echo htmlspecialchars($row['DATE']); ?></td>
+                                    </tr>
+                                <?php endwhile; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="8" class="px-6 py-4 text-center text-gray-500 italic">No records found</td>
+                                </tr>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
