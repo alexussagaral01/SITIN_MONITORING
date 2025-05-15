@@ -396,19 +396,7 @@ $result = $stmt->get_result();
                                     <tr>
                                         <td class="px-6 py-4"><?php echo htmlspecialchars($row['IDNO']); ?></td>
                                         <td class="px-6 py-4"><?php echo htmlspecialchars($row['FULL_NAME']); ?></td>
-                                        <td class="px-6 py-4">
-                                            <?php if ($row['TYPE'] === 'Direct'): ?>
-                                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                    <span class="w-1 h-1 mr-1.5 rounded-full bg-green-500"></span>
-                                                    Direct
-                                                </span>
-                                            <?php else: ?>
-                                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                                    <span class="w-1 h-1 mr-1.5 rounded-full bg-blue-500"></span>
-                                                    Reserved
-                                                </span>
-                                            <?php endif; ?>
-                                        </td>
+                                        <td class="px-6 py-4"><?php echo htmlspecialchars($row['TYPE']); ?></td>
                                         <td class="px-6 py-4"><?php echo htmlspecialchars($row['PURPOSE']); ?></td>
                                         <td class="px-6 py-4"><?php echo htmlspecialchars($row['LABORATORY']); ?></td>
                                         <td class="px-6 py-4"><?php echo date('h:i A', strtotime($row['TIME_IN'])); ?></td>

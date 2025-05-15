@@ -324,19 +324,7 @@ $labDataJSON = json_encode($labData);
                                 echo "<tr class='hover:bg-gray-50'>";
                                 echo "<td class='px-6 py-4'>" . htmlspecialchars($row['IDNO']) . "</td>";
                                 echo "<td class='px-6 py-4'>" . htmlspecialchars($row['FULL_NAME']) . "</td>";
-                                echo "<td class='px-6 py-4'>";
-                                if ($row['TYPE'] === 'Direct') {
-                                    echo "<span class='inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800'>
-                                            <span class='w-1 h-1 mr-1.5 rounded-full bg-green-500'></span>
-                                            Direct
-                                          </span>";
-                                } else {
-                                    echo "<span class='inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800'>
-                                            <span class='w-1 h-1 mr-1.5 rounded-full bg-blue-500'></span>
-                                            Reserved
-                                          </span>";
-                                }
-                                echo "</td>";
+                                echo "<td class='px-6 py-4'>" . htmlspecialchars($row['TYPE']) . "</td>";
                                 echo "<td class='px-6 py-4'>" . htmlspecialchars($row['PURPOSE']) . "</td>";
                                 echo "<td class='px-6 py-4'>" . htmlspecialchars($row['LABORATORY']) . "</td>";
                                 echo "<td class='px-6 py-4'>" . date('h:i A', strtotime($row['TIME_IN'])) . "</td>";
